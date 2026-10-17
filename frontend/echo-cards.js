@@ -1,6 +1,7 @@
 import { cardStyles } from './echo-styles.js';
 import { stubConfig, sliderCapability, textFields, normalizeTextConfig } from './echo-card-editor.js';
-import { runCardAction, bindCardGestures, cancelCardGestures } from './echo-entity-cards.js';
+import './echo-entity-cards.js';
+import { runCardAction, bindCardGestures, cancelCardGestures, bindGestures, syncActionAccessibility } from './echo-actions.js';
 
 const gridDefaults = {
   header: { columns: 12, rows: 2, min_columns: 9, min_rows: 1 },
@@ -78,6 +79,7 @@ ha-card{height:100%;min-height:0}
 :host([kind="weather"]) [data-field="condition"]{font-size:19px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%}
 :host([kind="weather"]) [data-field="temperature"]{font-size:22px}
 :host([kind="weather"]) [data-field="humidity"]{font-size:12px}
+:host([kind="media"]){--echo-media-control-size:44px;--echo-media-art-limit:320px;--echo-media-min-text-width:200px;--echo-media-gap:16px}
 :host([kind="media"]) ha-card{padding:16px}
 :host([kind="fan"]) ha-card{padding:14px}
 :host([width="narrow"][kind="header"]) .grid{grid-template-areas:"greeting clock" "room room" "date date"}
@@ -116,7 +118,7 @@ const adaptiveStyle = `
 :host([height="short"][kind="fan"]) .fan-speed{grid-template-rows:12px 40px}
 :host([height="short"][kind="fan"]) .fan-speed input{height:40px}
 :host([height="short"][kind="fan"]) .fan-speed>span{font-size:11px}
-:host([height="short"][kind="media"]){--media-heading:16px;--media-status:13px}
+:host([height="short"][kind="media"]){--media-heading:16px;--media-status:13px;--echo-media-control-size:40px}
 :host([height="short"][kind="media"]) ha-card{padding:8px 12px}
 :host([height="short"][kind="security"]) ha-card{padding:12px}
 :host([height="short"][kind="security"]) .grid{grid-template-rows:28px minmax(0,1fr)}
@@ -137,12 +139,14 @@ const climateControlStyle = `
 `;
 
 const presentationStyle = `
-:host([kind="media"]) .grid{grid-template-areas:"art info info info info" "art previous play next volume";grid-template-columns:var(--echo-art-width) repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr) var(--echo-action-size,44px);column-gap:16px;row-gap:16px}
+:host([kind="media"]) .grid{grid-template-areas:"art info info info info" "art previous play next volume";grid-template-columns:var(--echo-art-width) repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr) var(--echo-action-size,44px);column-gap:var(--echo-media-gap);row-gap:var(--echo-media-gap)}
 :host([kind="media"]) [data-field="art"]{width:var(--echo-art-width);height:var(--echo-art-height);align-self:end}
 :host([kind="media"]) [data-field="info"]{align-self:end}
 :host([kind="media"][media-layout="stacked"]) .grid{grid-template-areas:"art art art art" "info info info info" "previous play next volume";grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr) auto var(--echo-action-size,44px)}
 :host([kind="media"][media-layout="stacked"]) [data-field="art"]{justify-self:center;align-self:center}
 :host([kind="media"][media-layout="stacked"]) .info{text-align:center}
+:host([kind="media"][media-layout="compact"]) .grid{grid-template-areas:"info info info info" "previous play next volume";grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr) var(--echo-action-size)}
+:host([kind="media"][media-layout="compact"]) [data-field="art"]{display:none}
 :host([kind="fan"]) [data-field="title"]{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
 :host([kind="header"][header-layout="stacked"]) ha-card{padding:8px 20px}
 :host([kind="header"][header-layout="stacked"]) .grid{grid-template-areas:"greeting greeting" "room clock" "date date";grid-template-rows:16px minmax(0,1fr) 16px;column-gap:8px}
@@ -185,8 +189,7 @@ class EchoCard extends HTMLElement {
     if (this.kind === 'security' && (!Array.isArray(config.items) || config.items.length !== 3 || config.items.some(item => !item.entity))) {
       throw new Error('echo-security: items must contain three entities');
     }
-    this.clearHold();
-    cancelCardGestures.call(this);
+    cancelCardGestures(this);
     this.cleanups = [];
     this.stopSizing();
     this.stopTemplates();
@@ -211,6 +214,7 @@ class EchoCard extends HTMLElement {
     this.range = null;
     this.weatherSeparator = null;
     this.output = null;
+    this.iconCell = null;
     this.shadowRoot.replaceChildren();
     const style = document.createElement('style');
     style.textContent = baseStyle + '\n' + cardStyles[this.kind] + (gridDefaults[this.kind] ? nativeStyle + adaptiveStyle : '') + presentationStyle + (this.kind === 'climate' ? climateControlStyle : '')
@@ -243,15 +247,19 @@ class EchoCard extends HTMLElement {
   set layout(value) { this._layout = value; if (value) this.setAttribute('layout', value); else this.removeAttribute('layout'); }
   get layout() { return this._layout; }
   connectedCallback() { this.startSizing(); this.startTemplates(); this.update(); }
-  disconnectedCallback() { this.stopSizing(); this.clearHold(); this.stopTemplates(); cancelCardGestures.call(this); }
-  runAction(key) { return runCardAction.call(this, key); }
+  disconnectedCallback() { this.stopSizing(); this.stopTemplates(); cancelCardGestures(this); }
+  set preview(value) { this._preview = !!value; for (const card of this.childrenCards) card.preview = value; this.update(); }
+  get preview() { return this.actionOwner?.preview || this._preview; }
+  set pending(value) { if (this.actionOwner) this.actionOwner.pending = value; else this._pending = value; }
+  get pending() { return this.actionOwner ? this.actionOwner.pending : this._pending; }
+  runAction(key) { return runCardAction(this, key); }
   controlGestures(defaultTap = 'toggle') {
     this.gestureDefaults = { tap_action: { action: defaultTap }, hold_action: { action: 'more-info' } };
     this.shell.setAttribute('aria-label', this.config.name || this.config.entity);
-    bindCardGestures.call(this, this.shell);
+    bindCardGestures(this, this.shell);
     if (this.iconCell && ['tap', 'hold', 'double_tap'].some(gesture => this.config[`icon_${gesture}_action`] !== undefined)) {
       this.iconCell.setAttribute('aria-label', `${this.config.name || this.config.entity} icon`);
-      bindCardGestures.call(this, this.iconCell, 'icon_');
+      bindCardGestures(this, this.iconCell, 'icon_');
     }
   }
   startSizing() {
@@ -262,13 +270,22 @@ class EchoCard extends HTMLElement {
       const threshold = { header: 100, weather: 90, fan: 170, media: 160, security: 235 }[this.kind] || 0;
       this.setAttribute('height', height < threshold ? 'short' : 'tall');
       if (this.kind === 'media') {
-        const padding = height < 160 ? { x: 24, y: 16 } : { x: 32, y: 32 };
-        const action = height < 160 ? 40 : 44;
-        const stacked = height > width || width - padding.x < 280;
+        const style = getComputedStyle(this.shell);
+        const tokens = getComputedStyle(this);
+        const availableWidth = width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        const availableHeight = height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+        const gap = parseFloat(tokens.getPropertyValue('--echo-media-gap'));
+        const action = parseFloat(tokens.getPropertyValue('--echo-media-control-size'));
+        const limit = parseFloat(tokens.getPropertyValue('--echo-media-art-limit'));
+        const minText = parseFloat(tokens.getPropertyValue('--echo-media-min-text-width'));
+        const stacked = height > width || availableWidth < minText + gap + 48;
         this.setAttribute('media-layout', stacked ? 'stacked' : 'landscape');
-        // Reserve the metadata, two gaps and controls before growing square art.
-        const size = Math.max(0, Math.min(320, stacked ? width - padding.x : width - padding.x - 16 - 200,
-          stacked ? height - padding.y - action - 44 - 32 : height - padding.y));
+        const infoHeight = this.info.scrollHeight;
+        const size = Math.max(0, Math.min(limit, stacked ? availableWidth : availableWidth - gap - minText,
+          stacked ? availableHeight - action - infoHeight - 2 * gap : availableHeight));
+        // Text and transport remain visible when a short/narrow allocation
+        // cannot fit useful artwork. Never leave an invisible grid track.
+        if (stacked && size < 32) this.setAttribute('media-layout', 'compact');
         this.style.setProperty('--echo-art-width', `${size}px`);
         this.style.setProperty('--echo-art-height', `${size}px`);
         this.style.setProperty('--echo-action-size', `${action}px`);
@@ -277,7 +294,6 @@ class EchoCard extends HTMLElement {
     this.resizeObserver.observe(this);
   }
   stopSizing() { this.resizeObserver?.disconnect(); this.resizeObserver = null; }
-  clearHold() { clearTimeout(this.holdTimer); this.holdTimer = null; }
 
   stopTemplates() {
     this.templateRevision = (this.templateRevision || 0) + 1;
@@ -361,57 +377,29 @@ class EchoCard extends HTMLElement {
   nested(field, kind, config) {
     const wrapper = this.field(field);
     const child = document.createElement(`echo-${kind}-card`);
+    if (this.kind === 'fan' && kind === 'fan-power') child.actionOwner = this;
+    child.preview = this.preview;
     child.setConfig(config);
     wrapper.append(child);
     this.childrenCards.push(child);
   }
   button(action, hold = null, label = null) {
     this.action = action;
-    if (action) {
-      this.shell.setAttribute('role', 'button');
-      this.shell.tabIndex = 0;
-      this.shell.setAttribute('aria-label', label || this.config.name || this.config.entity || this.kind);
-    }
-    this.shell.addEventListener('click', event => {
-      event.stopPropagation();
-      if (this.held || this.moved) { this.held = false; this.moved = false; return; }
-      if (action) action();
-    });
-    this.shell.addEventListener('keydown', event => {
-      if (action && !event.repeat && ['Enter', ' '].includes(event.key)) {
-        event.preventDefault();
-        event.stopPropagation();
-        action();
-      }
-    });
-    if (!hold) return;
-    this.shell.addEventListener('contextmenu', event => event.preventDefault());
-    this.shell.addEventListener('pointerdown', event => {
-      event.stopPropagation();
-      if (event.button !== 0) return;
-      this.clearHold();
-      this.held = false;
-      this.moved = false;
-      this.pointerStart = [event.clientX, event.clientY];
-      this.holdTimer = setTimeout(() => { this.held = true; hold(); }, 500);
-    });
-    this.shell.addEventListener('pointermove', event => {
-      if (this.pointerStart && Math.hypot(event.clientX - this.pointerStart[0], event.clientY - this.pointerStart[1]) > 10) {
-        this.moved = true;
-        this.clearHold();
-      }
-    });
-    for (const eventName of ['pointerup', 'pointercancel', 'pointerleave']) {
-      this.shell.addEventListener(eventName, () => { this.clearHold(); this.pointerStart = null; });
-    }
+    this.shell.setAttribute('aria-label', label || this.config.name || this.config.entity || this.kind);
+    const callbacks = { tap: action, hold };
+    this.cleanups.push(bindGestures(this.shell, {
+      configured: gesture => !!callbacks[gesture],
+      run: gesture => { if (!this.preview) callbacks[gesture]?.(); },
+    }));
   }
   moreInfo() {
+    if (this.preview) return;
     this.dispatchEvent(new CustomEvent('hass-more-info', { detail: { entityId: this.config.entity }, bubbles: true, composed: true }));
   }
   async service(domain, service, data = {}) {
-    if (!this._hass || !available(this.entity) || this.pending) return;
+    if (this.preview || !this._hass || !available(this.entity) || this.pending) return;
     this.pending = true;
-    this.shell.setAttribute('aria-busy', 'true');
+    (this.actionOwner || this).update();
     try {
       await this._hass.callService(domain, service, { entity_id: this.config.entity, ...data });
     } catch (error) {
@@ -420,7 +408,7 @@ class EchoCard extends HTMLElement {
       }));
     } finally {
       this.pending = false;
-      this.shell.removeAttribute('aria-busy');
+      (this.actionOwner || this).update();
     }
   }
 
@@ -441,7 +429,7 @@ class EchoCard extends HTMLElement {
   }
   async adjustTemperature(direction) {
     const target = this.temperatureTarget();
-    if (!available(this.entity) || this.entity.state === 'off' || !target.supported || target.value == null || this.temperatureRequest) return;
+    if (this.preview || this.pending || !available(this.entity) || this.entity.state === 'off' || !target.supported || target.value == null || this.temperatureRequest) return;
     const next = Number(Math.max(target.minimum, Math.min(target.maximum, target.value + direction * target.step)).toFixed(3));
     if (next === target.value) return;
     const data = target.key === 'temperature' ? { temperature: next } : {
@@ -512,9 +500,9 @@ class EchoCard extends HTMLElement {
           this.iconCell.setAttribute('aria-label', this.config.name || 'Thermostat icon');
         }
         for (const eventName of ['pointerdown', 'pointerup', 'click', 'keydown', 'keyup']) this.iconCell.addEventListener(eventName, event => event.stopPropagation());
-        this.iconCell.addEventListener('click', () => runCardAction.call(this, 'icon_tap_action'));
+        this.iconCell.addEventListener('click', () => runCardAction(this, 'icon_tap_action'));
         this.iconCell.addEventListener('keydown', event => {
-          if (!event.repeat && ['Enter', ' '].includes(event.key)) { event.preventDefault(); runCardAction.call(this, 'icon_tap_action'); }
+          if (!event.repeat && ['Enter', ' '].includes(event.key)) { event.preventDefault(); runCardAction(this, 'icon_tap_action'); }
         });
         this.button(() => this.moreInfo());
       } else if (kind === 'media-action') {
@@ -525,6 +513,7 @@ class EchoCard extends HTMLElement {
       } else {
         if (kind === 'art') {
           this.picture = document.createElement('img');
+          this.pictureUrl = undefined;
           this.picture.alt = '';
           this.picture.hidden = true;
           this.picture.addEventListener('error', () => { this.picture.hidden = true; this.iconElement.hidden = false; });
@@ -555,7 +544,7 @@ class EchoCard extends HTMLElement {
       this.config.items.forEach((item, index) => this.nested(['front', 'back', 'garage'][index], 'security-tile', item));
     } else if (kind === 'fan') {
       const light = this.config.entity.startsWith('light.');
-      this.nested('power', 'fan-power', { ...this.config, icon: this.config.icon || (light ? 'mdi:lightbulb' : 'mdi:fan'), name: this.config.name || 'Power' });
+      this.nested('power', 'fan-power', { ...this.config, tap_action: { action: 'toggle' }, double_tap_action: { action: 'none' }, icon: this.config.icon || (light ? 'mdi:lightbulb' : 'mdi:fan'), name: this.config.name || 'Power' });
       this.controlGestures('none');
       this.field('title');
       this.field('status');
@@ -613,8 +602,8 @@ class EchoCard extends HTMLElement {
       this.text('l', status);
       this.fields.toggle.classList.toggle('on', on);
       this.style.setProperty('--toggle-background', on ? (fan ? '#2A9477' : '#E5A51A') : '#D8DDE4');
-      this.shell.setAttribute('aria-pressed', String(on));
-      this.shell.setAttribute('aria-disabled', String(!available(entity)));
+      syncActionAccessibility(this, this.shell);
+      if (this.iconCell.hasAttribute('role')) syncActionAccessibility(this, this.iconCell, 'icon_');
     } else if (this.kind === 'climate') {
       this.shell.setAttribute('aria-label', this.displayText('title') || this.config.entity);
       const colors = climateColors(entity);
@@ -627,7 +616,7 @@ class EchoCard extends HTMLElement {
         const target = this.temperatureTarget();
         this.temperatureCaption.textContent = this.displayText('target_label');
         this.temperatureReadout.textContent = this.displayText('target_temperature');
-        const disabled = !available(entity) || state === 'off' || !target.supported || target.value == null || this.pending || this.temperatureRequest;
+        const disabled = this.preview || !available(entity) || state === 'off' || !target.supported || target.value == null || this.pending || this.temperatureRequest;
         this.temperatureButtons[0].disabled = disabled || target.value <= target.minimum;
         this.temperatureButtons[1].disabled = disabled || target.value >= target.maximum;
         this.temperatureReadout.setAttribute('aria-label', `Target temperature ${this.temperatureReadout.textContent}`);
@@ -658,7 +647,7 @@ class EchoCard extends HTMLElement {
     } else if (this.kind === 'media-action') {
       this.setIcon(this.config.service === 'media_play_pause' ? (state === 'playing' ? 'mdi:pause' : 'mdi:play')
         : this.config.service === 'volume_mute' ? (attributes.is_volume_muted === true ? 'mdi:volume-off' : 'mdi:volume-high') : this.config.icon);
-      this.shell.setAttribute('aria-disabled', String(!available(entity)));
+      this.shell.setAttribute('aria-disabled', String(this.preview || this.pending || !available(entity)));
       if (this.config.service === 'volume_mute') this.shell.setAttribute('aria-pressed', String(attributes.is_volume_muted === true));
     } else if (this.kind === 'media') {
       const album = attributes.media_album_name;
@@ -675,7 +664,8 @@ class EchoCard extends HTMLElement {
       this.text('status', status);
       const capable = sliderCapability(entity);
       this.fields.speed.hidden = !capable && available(entity);
-      this.range.disabled = !available(entity) || !capable;
+      this.range.disabled = this.preview || this.pending || !available(entity) || !capable;
+      syncActionAccessibility(this, this.shell);
       this.range.style.accentColor = light ? '#E5A51A' : '#2A9477';
       this.output.style.color = light ? '#C68B14' : '#2A9477';
       if (!this.editing || !available(entity)) {

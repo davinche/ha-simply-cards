@@ -4,15 +4,15 @@ Target repository: https://github.com/davinche/ha-simply-cards
 
 ## Initial publication
 
-This folder is a prepared project, not a published Git checkout. No commit, remote push, tag or GitHub release has been made. In the preparation environment, GitHub access failed and `gh auth status` reported an invalid saved login.
+Use the existing repository checkout. Verify GitHub authentication locally before an approved push or release; never paste tokens into chat or repository files. Local code changes and validation do not authorize commits, pushes, tags or publishing.
 
-1. Restore GitHub access and authenticate locally using `gh auth login -h github.com`. Do not paste tokens into chat or repository files.
-2. Clone your empty repository to a normal project folder. Copy the **contents** of this prepared folder there, including `.github/`, `.gitignore`, `frontend/`, `scripts/` and `tests/`. Do not nest the entire prepared folder inside the repository.
+1. Verify GitHub access and authenticate locally using `gh auth login -h github.com` if needed.
+2. Use the existing checkout, or clone the repository when setting up another development machine.
 3. Ensure the GitHub repository is public. Give it a description and topics such as `home-assistant`, `lovelace`, `hacs`, `custom-cards`.
 4. Install Node.js 22 or newer, then run:
 
 ```text
-npm install
+npm ci
 npx playwright install chromium
 npm run build
 npm run check:release
@@ -20,13 +20,13 @@ npm test
 npm run test:bundle
 ```
 
-5. Commit the prepared files and the generated `package-lock.json`, then push to the repository's default branch. Do not commit `node_modules`, generated screenshots or build output. GitHub Actions also uploads a bundle artifact for branch builds.
+5. After approval, commit the source and `package-lock.json`, then push the approved branch. Do not commit `node_modules`, generated screenshots or build output. GitHub Actions also uploads a bundle artifact for branch builds.
 6. Wait for **Test and build** to pass in GitHub Actions. Check the source and bundled browser test steps, not only the build.
 7. Push tag `v0.1.0` at that tested commit. **Publish release** rebuilds, runs both browser suites, checks that the tag matches `package.json`, and publishes the tested `ha-simply-cards.js` asset only after all checks pass. HACS can then install the release.
 
 The workflow needs repository Actions enabled and permission to create releases; it uses GitHub's built-in token, not a personal token. Published releases are deliberate tag-triggered events; ordinary pushes do not automatically change installed cards.
 
-The package includes pinned direct build/test dependencies. The preparation environment could not download dependencies, so no lockfile or compiled bundle was fabricated. Until a lockfile is generated, workflows use `npm install`. Once committed, switch both workflow installation steps to `npm ci` for locked installs.
+The package includes pinned direct build/test dependencies and a generated lockfile. Both workflows use `npm ci` to install the recorded dependency tree. Use `npm install` only when intentionally updating dependencies, and review the resulting lockfile changes.
 
 ## Everyday iteration
 

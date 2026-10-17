@@ -904,6 +904,87 @@ async function run() {
     }
     assert.deepEqual(errors,[]);
     results.push('Toggle and slider Control card/icon gestures: pointer/keyboard, hold, delayed tap, double tap, explicit none, slider isolation, disconnect cleanup and six-action editor round trips');
+    await open(1,960,480,'legacy-reference');
+    await page.evaluate(async () => {
+      const tick=async()=>{await Promise.resolve();await Promise.resolve();};
+      for (const [type,slider] of [['toggle',false],['toggle',true],['fan',true]]) {
+        const card=document.createElement(`echo-${type}-card`);
+        const original={type:`custom:echo-${type}-card`,entity:'fan.demo_3',slider,grid_options:{columns:8,rows:3},future_option:{keep:true}};
+        card.setConfig(original);document.body.append(card);card.hass=mockHass;
+        const editor=card.constructor.getConfigElement();editor.setConfig(original);editor.hass=mockHass;
+        let emitted;editor.addEventListener('config-changed',event=>emitted=event.detail.config);
+        editor.actionForm.submitPatch({hold_action:{action:'none'}});
+        if (Object.hasOwn(emitted,'icon_tap_action') || !emitted.future_option.keep || emitted.grid_options.columns!==8 || original.hold_action) throw new Error('Full action save lost inheritance or mutated config');
+        card.setConfig(emitted);calls.length=0;
+        (slider?card.childrenCards[0].iconCell:card.iconCell).click();await tick();
+        if(calls.length!==1 || calls[0].service!=='toggle') throw new Error('Full action save disabled icon/power');
+        if(slider){calls.length=0;card.fields.title.click();await tick();if(calls.length)throw new Error('Full save enabled slider body tap');}
+        editor.setConfig(emitted);editor.actionForm.submitPatch({icon_tap_action:{action:'none'}});card.setConfig(emitted);
+        calls.length=0;(slider?card.childrenCards[0].iconCell:card.iconCell).click();await tick();
+        if(calls.length)throw new Error('Explicit icon none ignored');
+        if(slider){card.childrenCards[0].fields.toggle.click();await tick();if(calls.length!==1)throw new Error('Icon none disabled independent power switch');}
+        card.remove();
+      }
+    });
+    results.push('Complete native-form saves preserve inherited icon gestures, independent slider power, explicit none, aliases and unrelated configuration');
+    await page.evaluate(() => {
+      const hass={...mockHass,states:{...mockHass.states,'fan.demo_3':{...mockHass.states['fan.demo_3'],attributes:{...mockHass.states['fan.demo_3'].attributes,entity_picture:'/audit-cover.png'}}}};
+      const card=document.createElement('echo-entity-card');card.setConfig({entity:'fan.demo_3',show_entity_picture:true});card.hass=hass;document.body.append(card);
+      const source=card.picture.src;card.setConfig({...card.config,name:'Renamed'});
+      if(!source || card.picture.src!==source || card.picture.hidden)throw new Error('Entity image lost on reconfiguration');
+      card.setConfig({...card.config,show_entity_picture:false});if(!card.picture.hidden || card.picture.hasAttribute('src'))throw new Error('Entity picture clear failed');
+      card.setConfig({...card.config,show_entity_picture:true});if(card.picture.src!==source)throw new Error('Entity picture restore failed');card.remove();
+      const art=document.createElement('echo-art-card');art.setConfig({entity:'fan.demo_3'});art.hass=hass;document.body.append(art);
+      const artSource=art.picture.src;art.setConfig({...art.config});
+      if(art.picture.src!==artSource || art.picture.hidden)throw new Error('Media artwork lost on reconfiguration');art.remove();
+    });
+    results.push('Entity and media pictures survive reconfiguration with unchanged URLs and picture visibility changes');
+    await page.evaluate(async () => {
+      calls.length=0;infos.length=0;
+      for(const slider of [false,true]){
+        const card=document.createElement('echo-toggle-card');card.preview=true;card.setConfig({entity:'fan.demo_3',slider,tap_action:{action:'toggle'},icon_tap_action:{action:'toggle'}});document.body.append(card);card.hass=mockHass;
+        card.shell.click();(slider?card.childrenCards[0].iconCell:card.iconCell).click();
+        await card.service('homeassistant','toggle');
+        if(slider){card.range.value='3';card.range.dispatchEvent(new Event('change'));if(!card.childrenCards[0].preview || !card.range.disabled)throw new Error('Preview did not reach power/slider');}
+        card.setConfig({...card.config});if(slider&&!card.childrenCards[0].preview)throw new Error('Reconfiguration lost preview');card.remove();
+      }
+      const media=document.createElement('echo-media-card');media.setConfig({entity:'media_player.demo_10'});media.preview=true;media.hass=mockHass;document.body.append(media);
+      for(const child of media.childrenCards)child.shell.click();media.remove();
+      const climate=document.createElement('echo-climate-card');climate.setConfig({entity:'climate.demo_1',show_temperature_control:true,icon_tap_action:{action:'cycle-hvac-mode'}});climate.hass=mockHass;climate.preview=true;document.body.append(climate);
+      await climate.adjustTemperature(1);climate.iconCell.click();climate.shell.click();climate.remove();
+      await Promise.resolve();if(calls.length || infos.length)throw new Error('Preview executed device action or dialog');
+      const container=document.createElement('echo-container-card');container.preview=true;container.setConfig({cards:[{type:'custom:echo-toggle-card',entity:'fan.demo_3',slider:true}]});container.hass=mockHass;document.body.append(container);await container.ready;
+      const child=container.childrenCards[0];child.childrenCards[0].shell.click();if(calls.length || !child.preview || !child.childrenCards[0].preview)throw new Error('Container preview leaked nested action');container.remove();
+      const card=document.createElement('echo-toggle-card');card.setConfig({entity:'fan.demo_3',slider:true});document.body.append(card);
+      let resolve;let requests=0;card.hass={...mockHass,callService:()=>{requests++;return new Promise(done=>resolve=done)}};
+      card.childrenCards[0].shell.click();card.range.value='3';card.range.dispatchEvent(new Event('change'));
+      if(requests!==1 || !card.pending || !card.range.disabled || card.childrenCards[0].shell.getAttribute('aria-busy')!=='true')throw new Error('Power/slider request guard not shared');
+      resolve();await Promise.resolve();await Promise.resolve();
+      if(card.pending || card.range.disabled)throw new Error('Request guard failed to clear');
+      const change=card.service('fan','set_percentage',{percentage:25});card.childrenCards[0].shell.click();
+      if(requests!==2)throw new Error('Slider/power request guard not shared');resolve();await change;card.remove();
+    });
+    results.push('Preview suppression across controls, nested media, climate and containers; shared power/slider pending state and command serialization');
+    await page.evaluate(async () => {
+      const frame=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      const card=document.createElement('echo-toggle-card');card.setConfig({entity:'fan.demo_3',tap_action:{action:'more-info'},hold_action:{action:'none'},icon_tap_action:{action:'toggle'}});card.hass=mockHass;document.body.append(card);
+      if(card.shell.hasAttribute('aria-pressed') || card.shell.getAttribute('aria-disabled')!=='false' || !card.iconCell.hasAttribute('aria-pressed'))throw new Error('Action-specific accessibility incorrect');
+      card.hass={...mockHass,states:{...mockHass.states,'fan.demo_3':{...mockHass.states['fan.demo_3'],state:'unavailable'}}};
+      if(card.shell.getAttribute('aria-disabled')!=='false' || card.iconCell.getAttribute('aria-disabled')!=='true')throw new Error('Availability disabled non-device actions');
+      card.preview=true;if(card.shell.getAttribute('aria-disabled')!=='true')throw new Error('Preview accessibility incorrect');card.remove();
+      const media=document.createElement('echo-media-card');media.setConfig({entity:'media_player.demo_10'});media.hass=mockHass;
+      const wrapper=document.createElement('div');wrapper.style.cssText='width:280px;height:120px';document.body.append(wrapper);wrapper.append(media);await frame();
+      if(media.getAttribute('media-layout')!=='compact' || getComputedStyle(media.fields.art).display!=='none')throw new Error('Short/narrow artwork fallback missing');
+      const bounds=media.shell.getBoundingClientRect();for(const child of media.childrenCards.slice(1)){const box=child.shell.getBoundingClientRect();if(box.top<bounds.top || box.bottom>bounds.bottom+1)throw new Error('Compact media controls clipped');}
+      wrapper.style.cssText='width:616px;height:188px';await frame();
+      media.shell.style.padding='24px';media.style.setProperty('--echo-media-gap','12px');await frame();
+      // Trigger a real resize after changing presentation measurements.
+      wrapper.style.width='617px';await frame();
+      const art=media.childrenCards[0].shell.getBoundingClientRect();const padded=media.shell.getBoundingClientRect();
+      if(Math.abs(art.height-140)>1 || Math.abs(art.bottom-(padded.bottom-24))>1)throw new Error('Media sizing ignored actual CSS padding');wrapper.remove();
+    });
+    results.push('Action-specific accessibility; explicit compact media fallback and artwork sizing from actual CSS measurements');
+    assert.deepEqual(errors,[]);
     fs.writeFileSync(path.join(__dirname,'verification-results.json'),JSON.stringify({environment:'Headless Chromium; mocked Home Assistant, placeholder icons',passed:results},null,2));
     console.log(results.join('\n'));
   } finally { await browser.close(); }

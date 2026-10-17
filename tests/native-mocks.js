@@ -57,6 +57,12 @@ function createCard(config) {
 }
 window.loadCardHelpers=async () => ({createCardElement:createCard});
 
-customElements.define('ha-form', class extends HTMLElement {});
+customElements.define('ha-form', class extends HTMLElement {
+  // Home Assistant returns the full form, not just the edited field.
+  submitPatch(patch) {
+    const value = { ...structuredClone(this.data), ...structuredClone(patch) };
+    this.dispatchEvent(new CustomEvent('value-changed', { detail: { value }, bubbles: true, composed: true }));
+  }
+});
 customElements.define('hui-card-element-editor', class extends HTMLElement {});
 customElements.define('hui-card-picker', class extends HTMLElement {});

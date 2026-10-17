@@ -1,9 +1,7 @@
+import { gestures, actionNames, usable, bindCardGestures, cancelCardGestures, runCardAction } from './echo-actions.js';
 import { cardStyles } from './echo-styles.js';
 
-const gestures = ['tap', 'hold', 'double_tap'];
-const actionNames = ['none', 'more-info', 'toggle', 'perform-action', 'navigate', 'url'];
 const emit = (node, name, detail) => node.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
-const usable = entity => entity && !['unknown', 'unavailable'].includes(entity.state);
 const sharedStyle = `
 :host{display:block;height:100%;min-height:0;min-width:0;font-family:var(--paper-font-body1_-_font-family,Roboto,Arial,sans-serif)}
 *{box-sizing:border-box}[hidden]{display:none!important}
@@ -67,6 +65,7 @@ class EchoEntityCard extends EchoStyledCard {
     this.iconCell.className = 'img-cell';
     this.icon = document.createElement('ha-icon');
     this.picture = document.createElement('img');
+    this.pictureUrl = undefined;
     this.picture.alt = '';
     this.picture.hidden = true;
     this.picture.addEventListener('error', () => { this.picture.hidden = true; this.icon.hidden = false; });
@@ -122,86 +121,9 @@ class EchoEntityCard extends EchoStyledCard {
     this.iconCell.setAttribute('aria-label', `${this.nameElement.textContent} icon`);
     this.shell.setAttribute('aria-busy', String(!!this.pending));
   }
-  bindGestures(element, prefix) {
-    const configured = gesture => {
-      const action = (this.config[`${prefix}${gesture}_action`] ?? this.gestureDefaults?.[`${prefix}${gesture}_action`])?.action;
-      return action && action !== 'none';
-    };
-    const active = gestures.some(configured);
-    if (active) { element.setAttribute('role', 'button'); element.tabIndex = 0; }
-    let holdTimer, tapTimer, start, held = false, moved = false;
-    const clearHold = () => { clearTimeout(holdTimer); holdTimer = null; };
-    this.cleanups.push(() => { clearHold(); clearTimeout(tapTimer); });
-    element.addEventListener('pointerdown', event => {
-      event.stopPropagation();
-      if (event.button !== 0) return;
-      clearHold(); held = false; moved = false; start = [event.clientX, event.clientY];
-      if (configured('hold')) holdTimer = setTimeout(() => { held = true; clearTimeout(tapTimer); }, 500);
-    });
-    element.addEventListener('pointermove', event => {
-      if (start && Math.hypot(event.clientX - start[0], event.clientY - start[1]) > 10) { moved = true; clearHold(); }
-    });
-    element.addEventListener('pointerup', event => {
-      event.stopPropagation(); clearHold(); start = null;
-      if (held && !moved) this.runAction(`${prefix}hold_action`);
-    });
-    for (const eventName of ['pointercancel', 'pointerleave']) element.addEventListener(eventName, () => { clearHold(); start = null; moved = true; });
-    element.addEventListener('contextmenu', event => { if (configured('hold')) event.preventDefault(); });
-    element.addEventListener('click', event => {
-      event.stopPropagation();
-      if (held || moved) { held = false; moved = false; return; }
-      if (configured('double_tap')) {
-        if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; this.runAction(`${prefix}double_tap_action`); }
-        else tapTimer = setTimeout(() => { tapTimer = null; this.runAction(`${prefix}tap_action`); }, 300);
-      } else this.runAction(`${prefix}tap_action`);
-    });
-    element.addEventListener('keydown', event => {
-      event.stopPropagation();
-      if (!event.repeat && ['Enter', ' '].includes(event.key)) { event.preventDefault(); this.runAction(`${prefix}tap_action`); }
-    });
-  }
-  cancelGestures() { for (const cleanup of this.cleanups || []) cleanup(); }
-  async runAction(key) {
-    const action = this.config[key] ?? this.gestureDefaults?.[key] ?? { action: 'none' };
-    if (this.preview || action.action === 'none' || this.pending) return;
-    const entity = this._hass?.states[this.config.entity];
-    const controlsEntity = ['toggle', 'perform-action', 'call-service', 'cycle-hvac-mode'].includes(action.action);
-    if (controlsEntity && (!this._hass || !usable(entity))) return;
-    const exempt = action.confirmation?.exemptions?.some(item => item.user === this._hass?.user?.id);
-    if (action.confirmation && !exempt && !window.confirm(action.confirmation.text || 'Run this action?')) return;
-    this.pending = true;
-    this.update();
-    try {
-      if (action.action === 'more-info') emit(this, 'hass-more-info', { entityId: action.entity || this.config.entity });
-      else if (action.action === 'cycle-hvac-mode') {
-        const supported = entity.attributes.hvac_modes || [];
-        const modes = [...new Set(this.config.hvac_modes || supported)].filter(mode => supported.includes(mode));
-        if (!modes.length) throw new Error('No supported HVAC modes selected');
-        const nextMode = modes[(modes.indexOf(entity.state) + 1) % modes.length];
-        if (nextMode !== entity.state) await this._hass.callService('climate', 'set_hvac_mode', { entity_id: this.config.entity, hvac_mode: nextMode });
-      }
-      else if (action.action === 'toggle') {
-        const domain = this.config.entity.split('.')[0];
-        const service = domain === 'lock' ? (entity.state === 'locked' ? 'unlock' : 'lock') : domain === 'cover' ? (entity.state === 'closed' ? 'open_cover' : 'close_cover') : 'toggle';
-        await this._hass.callService(['lock', 'cover'].includes(domain) ? domain : 'homeassistant', service, { entity_id: this.config.entity });
-      } else if (['perform-action', 'call-service'].includes(action.action)) {
-        const serviceName = action.perform_action || action.service || '';
-        const [domain, service] = serviceName.split('.');
-        if (!domain || !service) throw new Error('Specify a domain.service action');
-        await this._hass.callService(domain, service, action.data ?? action.service_data ?? {}, action.target);
-      } else if (action.action === 'navigate') {
-        const url = new URL(action.navigation_path, location.href);
-        if (!action.navigation_path || url.origin !== location.origin) throw new Error('Navigation must stay within Home Assistant');
-        history[action.navigation_replace ? 'replaceState' : 'pushState'](null, '', url.href);
-        window.dispatchEvent(new Event('location-changed'));
-      } else if (action.action === 'url') {
-        const url = new URL(action.url_path, location.href);
-        if (!action.url_path || !['http:', 'https:'].includes(url.protocol)) throw new Error('Specify an HTTP or HTTPS URL');
-        window.open(url.href, '_blank', 'noopener,noreferrer');
-      } else throw new Error(`Unsupported action: ${action.action}`);
-    } catch (error) { emit(this, 'hass-notification', { message: error.message }); }
-    finally { this.pending = false; this.update(); }
-  }
+  bindGestures(element, prefix) { bindCardGestures(this, element, prefix); }
+  cancelGestures() { cancelCardGestures(this); }
+  runAction(key) { return runCardAction(this, key); }
   static getConfigElement() { return document.createElement('echo-entity-editor'); }
   static getStubConfig(hass, entities = [], fallback = []) { return { entity: [...entities, ...fallback, ...Object.keys(hass?.states || {})][0] || '', tap_action: { action: 'none' } }; }
 }
@@ -283,9 +205,6 @@ class EchoContainerCard extends EchoStyledCard {
   static getStubConfig() { return { columns: 3, cards: [] }; }
 }
 
-export function runCardAction(key) { return EchoEntityCard.prototype.runAction.call(this, key); }
-export function bindCardGestures(element, prefix = '') { return EchoEntityCard.prototype.bindGestures.call(this, element, prefix); }
-export function cancelCardGestures() { return EchoEntityCard.prototype.cancelGestures.call(this); }
 
 class EchoGenericEditor extends HTMLElement {
   constructor() { super(); this.attachShadow({ mode: 'open' }); }

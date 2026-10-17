@@ -290,7 +290,9 @@ class EchoCardEditor extends HTMLElement {
       this.actionForm.hass = this._hass;
       const tap = (this.config.slider ?? this.kind === 'fan') ? 'none' : 'toggle';
       this.actionForm.schema[0].selector.ui_action.default_action = tap;
-      this.actionForm.data = { tap_action: { action: tap }, hold_action: { action: 'more-info' }, double_tap_action: { action: 'none' }, icon_tap_action: { action: 'none' }, icon_hold_action: { action: 'none' }, icon_double_tap_action: { action: 'none' }, ...this.config };
+      // Missing icon keys mean inherit. Do not turn that into explicit "none"
+      // when Home Assistant returns the entire form after an unrelated edit.
+      this.actionForm.data = { tap_action: { action: tap }, hold_action: { action: 'more-info' }, double_tap_action: { action: 'none' }, ...this.config };
     }
     if (this.templateForm) {
       this.templateForm.hass = this._hass;
