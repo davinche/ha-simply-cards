@@ -56,6 +56,10 @@ grid_options:
 
 Sliders default to hidden. Enable one only when the entity supports brightness or fan percentage. Zero brightness turns a light off. Slider changes do not replace the independent on/off action.
 
+Control cards support independent card and icon tap, hold and double-tap actions in the visual editor, including slider-enabled controls and the legacy Fan alias. Existing defaults are retained: plain card tap toggles; slider-card power toggles and the remaining card body has no tap action; hold opens more-info. An unconfigured icon follows its power/card action; explicitly configuring any icon gesture isolates the icon, with unspecified icon gestures doing nothing. Sliders operate independently. Actions match Entity cards: none, more-info, toggle, perform-action, navigate and URL, with optional confirmation.
+
+Media artwork is square and grows with its allocation, up to 320px, while reserving room for metadata and controls. Landscape artwork and transport controls share a bottom edge. Portrait and narrow cards stack artwork, metadata and controls. Fan title/state/speed controls stay together at the bottom, with power at the top. Native Grid/Sections sizing defaults are unchanged.
+
 ### Text sources
 
 Header, Weather and Climate text fields are prefilled native Jinja editors that accept plain text too. Each value has one source under `templates`; a blank source hides its text. Missing source keys receive defaults. Existing Name/room values migrate into the corresponding source when it is absent.

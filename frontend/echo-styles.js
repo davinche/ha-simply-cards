@@ -169,10 +169,11 @@ ha-card {
   min-width:0;
   grid-template-areas:"power" "title" "status" "speed";
   grid-template-columns:minmax(0,1fr);
-  grid-template-rows:calc(44 * var(--echo-unit, 1px)) calc(24 * var(--echo-unit, 1px)) calc(20 * var(--echo-unit, 1px)) minmax(0,1fr)
+  grid-template-rows:minmax(calc(44 * var(--echo-unit, 1px)),1fr) calc(24 * var(--echo-unit, 1px)) calc(20 * var(--echo-unit, 1px)) 62px
 }
 [data-field="power"] {
   width:100%;
+  align-self:start;
   height:calc(44 * var(--echo-unit, 1px))
 }
 [data-field="title"] {

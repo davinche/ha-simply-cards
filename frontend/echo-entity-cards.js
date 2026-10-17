@@ -123,7 +123,10 @@ class EchoEntityCard extends EchoStyledCard {
     this.shell.setAttribute('aria-busy', String(!!this.pending));
   }
   bindGestures(element, prefix) {
-    const configured = gesture => this.config[`${prefix}${gesture}_action`]?.action && this.config[`${prefix}${gesture}_action`].action !== 'none';
+    const configured = gesture => {
+      const action = (this.config[`${prefix}${gesture}_action`] ?? this.gestureDefaults?.[`${prefix}${gesture}_action`])?.action;
+      return action && action !== 'none';
+    };
     const active = gestures.some(configured);
     if (active) { element.setAttribute('role', 'button'); element.tabIndex = 0; }
     let holdTimer, tapTimer, start, held = false, moved = false;
@@ -159,7 +162,7 @@ class EchoEntityCard extends EchoStyledCard {
   }
   cancelGestures() { for (const cleanup of this.cleanups || []) cleanup(); }
   async runAction(key) {
-    const action = this.config[key] || { action: 'none' };
+    const action = this.config[key] ?? this.gestureDefaults?.[key] ?? { action: 'none' };
     if (this.preview || action.action === 'none' || this.pending) return;
     const entity = this._hass?.states[this.config.entity];
     const controlsEntity = ['toggle', 'perform-action', 'call-service', 'cycle-hvac-mode'].includes(action.action);
@@ -281,6 +284,8 @@ class EchoContainerCard extends EchoStyledCard {
 }
 
 export function runCardAction(key) { return EchoEntityCard.prototype.runAction.call(this, key); }
+export function bindCardGestures(element, prefix = '') { return EchoEntityCard.prototype.bindGestures.call(this, element, prefix); }
+export function cancelCardGestures() { return EchoEntityCard.prototype.cancelGestures.call(this); }
 
 class EchoGenericEditor extends HTMLElement {
   constructor() { super(); this.attachShadow({ mode: 'open' }); }

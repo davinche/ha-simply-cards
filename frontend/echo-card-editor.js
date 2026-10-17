@@ -101,6 +101,7 @@ class EchoCardEditor extends HTMLElement {
     this.controls = [];
     this.iconForms = [];
     this.templateForm = null;
+    this.actionForm = null;
     this.textSchemaVariant = undefined;
     this.shadowRoot.replaceChildren();
     const style = document.createElement('style');
@@ -162,6 +163,22 @@ class EchoCardEditor extends HTMLElement {
       this.form.append(group);
     }
     if (['toggle', 'fan'].includes(this.kind)) this.control(this.form, 'Show slider (brightness or fan speed)', 'slider', { checkbox: true, defaultValue: this.kind === 'fan' });
+    if (['toggle', 'fan'].includes(this.kind)) {
+      this.actionForm = document.createElement('ha-form');
+      this.actionForm.dataset.key = 'actions';
+      this.actionForm.computeLabel = field => field.name.replace(/_/g, ' ').replace(/^./, value => value.toUpperCase());
+      this.actionForm.schema = ['', 'icon_'].flatMap(prefix => ['tap', 'hold', 'double_tap'].map(gesture => ({
+        name: `${prefix}${gesture}_action`, selector: { ui_action: { default_action: prefix ? 'none' : gesture === 'tap' ? 'toggle' : gesture === 'hold' ? 'more-info' : 'none', actions: ['none', 'more-info', 'toggle', 'perform-action', 'navigate', 'url'] } }, context: { entity_id: 'entity' },
+      })));
+      this.actionForm.addEventListener('value-changed', event => {
+        event.stopPropagation();
+        const next = { ...this.config };
+        for (const field of this.actionForm.schema) if (Object.hasOwn(event.detail.value, field.name)) next[field.name] = structuredClone(event.detail.value[field.name]);
+        this.config = next;
+        this.dispatchEvent(new CustomEvent('config-changed', { detail: { config: next }, bubbles: true, composed: true }));
+      });
+      this.form.append(this.actionForm);
+    }
     if (this.kind === 'climate') {
       this.control(this.form, 'Show temperature adjustment buttons', 'show_temperature_control', { checkbox: true });
       this.climateForm = document.createElement('ha-form');
@@ -269,6 +286,12 @@ class EchoCardEditor extends HTMLElement {
   }
   syncCapabilities() {
     this.syncIcons();
+    if (this.actionForm) {
+      this.actionForm.hass = this._hass;
+      const tap = (this.config.slider ?? this.kind === 'fan') ? 'none' : 'toggle';
+      this.actionForm.schema[0].selector.ui_action.default_action = tap;
+      this.actionForm.data = { tap_action: { action: tap }, hold_action: { action: 'more-info' }, double_tap_action: { action: 'none' }, icon_tap_action: { action: 'none' }, icon_hold_action: { action: 'none' }, icon_double_tap_action: { action: 'none' }, ...this.config };
+    }
     if (this.templateForm) {
       this.templateForm.hass = this._hass;
       this.templateForm.data = { ...this.config.templates };

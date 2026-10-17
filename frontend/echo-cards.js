@@ -1,6 +1,6 @@
 import { cardStyles } from './echo-styles.js';
 import { stubConfig, sliderCapability, textFields, normalizeTextConfig } from './echo-card-editor.js';
-import { runCardAction } from './echo-entity-cards.js';
+import { runCardAction, bindCardGestures, cancelCardGestures } from './echo-entity-cards.js';
 
 const gridDefaults = {
   header: { columns: 12, rows: 2, min_columns: 9, min_rows: 1 },
@@ -86,8 +86,6 @@ ha-card{height:100%;min-height:0}
 :host([width="narrow"][kind="weather"]) .grid{grid-template-columns:36px minmax(0,1fr);column-gap:6px}
 :host([width="narrow"][kind="weather"]) .img-cell,:host([width="narrow"][kind="weather"]) ha-icon{width:34px;height:34px}
 :host([width="narrow"][kind="weather"]) [data-field="condition"]{font-size:16px}
-:host([width="narrow"][kind="media"]) .grid{grid-template-areas:"art info info info" "previous play next volume";grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(64px,1fr) 48px;gap:8px}
-:host([width="narrow"][kind="media"]){--echo-art-width:64px;--echo-art-height:64px;--media-heading:17px;--media-status:13px}
 :host([width="narrow"][kind="climate"]) ha-card{padding:12px}
 :host([width="narrow"][kind="climate"]) .grid{grid-template-columns:52px minmax(0,1fr) auto}
 :host([width="narrow"][kind="climate"]) .img-cell{width:44px;height:44px}
@@ -111,18 +109,15 @@ const adaptiveStyle = `
 :host([height="short"][kind="weather"]) [data-field="condition"]{font-size:14px;line-height:14px}
 :host([height="short"][kind="weather"]) [data-field="temperature"]{font-size:14px;line-height:12px}
 :host([height="short"][kind="fan"]) ha-card{padding:8px 10px}
-:host([height="short"][kind="fan"]) .grid{grid-template-areas:"power power" "title status" "speed speed";grid-template-columns:minmax(0,1fr) auto;grid-template-rows:32px 20px 52px}
+:host([height="short"][kind="fan"]) .grid{grid-template-areas:"power power" "title status" "speed speed";grid-template-columns:minmax(0,1fr) auto;grid-template-rows:minmax(32px,1fr) 20px 52px}
 :host([height="short"][kind="fan"]) [data-field="power"]{height:32px;--echo-power-size:32px}
 :host([height="short"][kind="fan"]) [data-field="title"]{font-size:15px;line-height:20px;align-self:center}
 :host([height="short"][kind="fan"]) [data-field="status"]{font-size:12px;line-height:20px;align-self:center;justify-self:end}
 :host([height="short"][kind="fan"]) .fan-speed{grid-template-rows:12px 40px}
 :host([height="short"][kind="fan"]) .fan-speed input{height:40px}
 :host([height="short"][kind="fan"]) .fan-speed>span{font-size:11px}
-:host([height="short"][kind="media"]){--echo-art-width:64px;--echo-art-height:80px;--echo-action-size:40px;--media-heading:16px;--media-status:13px}
+:host([height="short"][kind="media"]){--media-heading:16px;--media-status:13px}
 :host([height="short"][kind="media"]) ha-card{padding:8px 12px}
-:host([height="short"][kind="media"]) .grid{grid-template-columns:64px repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr) 40px;gap:8px}
-:host([height="short"][width="narrow"][kind="media"]){--echo-art-width:44px;--echo-art-height:44px}
-:host([height="short"][width="narrow"][kind="media"]) .grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(44px,1fr) 40px}
 :host([height="short"][kind="security"]) ha-card{padding:12px}
 :host([height="short"][kind="security"]) .grid{grid-template-rows:28px minmax(0,1fr)}
 `;
@@ -142,6 +137,12 @@ const climateControlStyle = `
 `;
 
 const presentationStyle = `
+:host([kind="media"]) .grid{grid-template-areas:"art info info info info" "art previous play next volume";grid-template-columns:var(--echo-art-width) repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr) var(--echo-action-size,44px);column-gap:16px;row-gap:16px}
+:host([kind="media"]) [data-field="art"]{width:var(--echo-art-width);height:var(--echo-art-height);align-self:end}
+:host([kind="media"]) [data-field="info"]{align-self:end}
+:host([kind="media"][media-layout="stacked"]) .grid{grid-template-areas:"art art art art" "info info info info" "previous play next volume";grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr) auto var(--echo-action-size,44px)}
+:host([kind="media"][media-layout="stacked"]) [data-field="art"]{justify-self:center;align-self:center}
+:host([kind="media"][media-layout="stacked"]) .info{text-align:center}
 :host([kind="fan"]) [data-field="title"]{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
 :host([kind="header"][header-layout="stacked"]) ha-card{padding:8px 20px}
 :host([kind="header"][header-layout="stacked"]) .grid{grid-template-areas:"greeting greeting" "room clock" "date date";grid-template-rows:16px minmax(0,1fr) 16px;column-gap:8px}
@@ -185,6 +186,8 @@ class EchoCard extends HTMLElement {
       throw new Error('echo-security: items must contain three entities');
     }
     this.clearHold();
+    cancelCardGestures.call(this);
+    this.cleanups = [];
     this.stopSizing();
     this.stopTemplates();
     this.editing = false;
@@ -240,7 +243,17 @@ class EchoCard extends HTMLElement {
   set layout(value) { this._layout = value; if (value) this.setAttribute('layout', value); else this.removeAttribute('layout'); }
   get layout() { return this._layout; }
   connectedCallback() { this.startSizing(); this.startTemplates(); this.update(); }
-  disconnectedCallback() { this.stopSizing(); this.clearHold(); this.stopTemplates(); }
+  disconnectedCallback() { this.stopSizing(); this.clearHold(); this.stopTemplates(); cancelCardGestures.call(this); }
+  runAction(key) { return runCardAction.call(this, key); }
+  controlGestures(defaultTap = 'toggle') {
+    this.gestureDefaults = { tap_action: { action: defaultTap }, hold_action: { action: 'more-info' } };
+    this.shell.setAttribute('aria-label', this.config.name || this.config.entity);
+    bindCardGestures.call(this, this.shell);
+    if (this.iconCell && ['tap', 'hold', 'double_tap'].some(gesture => this.config[`icon_${gesture}_action`] !== undefined)) {
+      this.iconCell.setAttribute('aria-label', `${this.config.name || this.config.entity} icon`);
+      bindCardGestures.call(this, this.iconCell, 'icon_');
+    }
+  }
   startSizing() {
     if (!this.isConnected || !this.config || !gridDefaults[this.kind] || this.resizeObserver) return;
     this.resizeObserver = new ResizeObserver(entries => {
@@ -248,6 +261,18 @@ class EchoCard extends HTMLElement {
       this.setAttribute('width', width < 440 ? 'narrow' : 'wide');
       const threshold = { header: 100, weather: 90, fan: 170, media: 160, security: 235 }[this.kind] || 0;
       this.setAttribute('height', height < threshold ? 'short' : 'tall');
+      if (this.kind === 'media') {
+        const padding = height < 160 ? { x: 24, y: 16 } : { x: 32, y: 32 };
+        const action = height < 160 ? 40 : 44;
+        const stacked = height > width || width - padding.x < 280;
+        this.setAttribute('media-layout', stacked ? 'stacked' : 'landscape');
+        // Reserve the metadata, two gaps and controls before growing square art.
+        const size = Math.max(0, Math.min(320, stacked ? width - padding.x : width - padding.x - 16 - 200,
+          stacked ? height - padding.y - action - 44 - 32 : height - padding.y));
+        this.style.setProperty('--echo-art-width', `${size}px`);
+        this.style.setProperty('--echo-art-height', `${size}px`);
+        this.style.setProperty('--echo-action-size', `${action}px`);
+      }
     });
     this.resizeObserver.observe(this);
   }
@@ -475,7 +500,7 @@ class EchoCard extends HTMLElement {
       }
       if (['toggle', 'fan-power'].includes(kind)) {
         this.field('toggle', 'toggle').append(document.createElement('span'));
-        this.button(() => this.service('homeassistant', 'toggle'), () => this.moreInfo());
+        this.controlGestures();
       } else if (kind === 'climate') {
         this.field('current');
         this.field('hint');
@@ -530,7 +555,8 @@ class EchoCard extends HTMLElement {
       this.config.items.forEach((item, index) => this.nested(['front', 'back', 'garage'][index], 'security-tile', item));
     } else if (kind === 'fan') {
       const light = this.config.entity.startsWith('light.');
-      this.nested('power', 'fan-power', { entity: this.config.entity, icon: this.config.icon || (light ? 'mdi:lightbulb' : 'mdi:fan'), name: this.config.name || 'Power' });
+      this.nested('power', 'fan-power', { ...this.config, icon: this.config.icon || (light ? 'mdi:lightbulb' : 'mdi:fan'), name: this.config.name || 'Power' });
+      this.controlGestures('none');
       this.field('title');
       this.field('status');
       const speed = this.field('speed', 'fan-speed', 'label');
@@ -560,9 +586,8 @@ class EchoCard extends HTMLElement {
           else this.service('light', 'turn_on', { brightness_pct: percentage });
         } else this.service('fan', 'set_percentage', { percentage });
       });
-      this.range.addEventListener('blur', () => { this.editing = false; this.update(); });
+      this.range.addEventListener('blur', () => { this.editing = false; if (this.range?.isConnected) this.update(); });
       this.range.addEventListener('pointercancel', () => { this.editing = false; this.update(); });
-      this.button(null, () => this.moreInfo());
     }
   }
 

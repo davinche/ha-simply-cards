@@ -33,7 +33,7 @@ async function run() {
       await route.fulfill({path:filename,contentType:filename.endsWith('.js') ? 'text/javascript' : filename.endsWith('.json') ? 'application/json' : 'text/html'});
     });
     const errors = [];
-    page.on('pageerror', error => { errors.push(error.message); console.error('Page error:',error.message); });
+    page.on('pageerror', error => { errors.push(error.message); console.error('Page error:',error.stack); });
     async function open(view, width, height, mode = 'legacy') {
       await page.setViewportSize({width,height});
       await page.goto(`http://127.0.0.1:${server.address().port}/tests/preview.html?view=${view}&mode=${mode}`);
@@ -768,11 +768,16 @@ async function run() {
       }
       const fan = topCards.find(card=>card.kind==='fan');
       const parent=document.createElement('div');document.body.append(parent);parent.append(fan);
-      for (const [width,height] of [[301,188],[249,157],[320,120]]) {
+      for (const [width,height] of [[301,188],[249,157],[320,120],[416,396]]) {
         parent.style.cssText=`width:${width}px;height:${height}px`;
         fan.setConfig({...fan.config,name:'Guest Bedroom Ceiling Fan Guest Bedroom Ceiling Fan'});await frame();
         const title=fan.fields.title;const style=getComputedStyle(title);const box=title.getBoundingClientRect();const power=fan.fields.power.getBoundingClientRect();const speed=fan.fields.speed.getBoundingClientRect();
         if (style.whiteSpace!=='nowrap' || style.textOverflow!=='ellipsis' || style.overflow!=='hidden' || title.scrollWidth<=title.clientWidth || box.top<power.bottom-1 || box.bottom>speed.top+1 || box.right>fan.shell.getBoundingClientRect().right) throw new Error('Long fan title overlaps controls or fails truncation');
+        const status=fan.fields.status.getBoundingClientRect();
+        const bounds=fan.shell.getBoundingClientRect();
+        const padding=parseFloat(getComputedStyle(fan.shell).paddingBottom);
+        if (Math.abs(speed.bottom-(bounds.bottom-padding))>1 || Math.abs(status.bottom-speed.top)>1 || (fan.getAttribute('height')==='tall' && Math.abs(box.bottom-status.top)>1)) throw new Error('Fan title/state/slider do not form a bottom-aligned group');
+        if (Math.abs(fan.childrenCards[0].shell.getBoundingClientRect().top-power.top)>1) throw new Error('Fan power moved away from top');
       }
       fan.remove();parent.remove();
     });
@@ -796,6 +801,109 @@ async function run() {
     }
     assert.deepEqual(errors,[]);
     results.push('Opt-in Header/Weather arrangements: visual-editor round trips, unchanged default geometry, restored defaults, inline blank handling, parent sizing, long fan-title truncation, and Echo 5 960×480/800×400 allocations');
+    // Reproduce the supplied deployment without the reference fixture's opt-in
+    // arrangements, shortened fan name, or replacement of the compatibility alias.
+    for (const [width,height] of [[960,480],[800,400]]) {
+      await open(1,width,height,'legacy-reference');
+      await page.evaluate(async () => {
+        const frame=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        const header=topCards.find(card=>card.kind==='header');
+        const weather=topCards.find(card=>card.kind==='weather');
+        const oldFan=topCards.find(card=>card.kind==='fan');
+        const defaults=topCards.map(card=>card.getGridOptions());
+        for (const card of topCards) {
+          const config={...card.config,profile:'guest',sizing:'fixed'};
+          delete config.header_layout;delete config.weather_layout;
+          card.setConfig(config);
+        }
+        const fan=document.createElement('echo-fan-card');
+        fan.setConfig({entity:oldFan.config.entity,profile:'guest',sizing:'fixed'});
+        fan.style.gridArea='fan';fan.hass=mockHass;oldFan.replaceWith(fan);
+        topCards[topCards.indexOf(oldFan)]=fan;
+        patchState(fan.config.entity,'off',{friendly_name:'Guest Bedroom Ceiling Fan Guest Bedroom Ceiling Fan',percentage:0});
+        await Promise.all(topCards.map(card=>card.templateReady));await frame();
+        if (header.getAttribute('header-layout')!=='auto' || weather.getAttribute('weather-layout')!=='stacked') throw new Error('Deployment defaults changed');
+        if (JSON.stringify(topCards.map(card=>card.getGridOptions()))!==JSON.stringify(defaults)) throw new Error('Native sizing defaults changed');
+        const title=fan.fields.title.getBoundingClientRect();
+        const power=fan.fields.power.getBoundingClientRect();
+        const speed=fan.fields.speed.getBoundingClientRect();
+        if (fan.fields.title.textContent!=='Guest Bedroom Ceiling Fan Guest Bedroom Ceiling Fan' || fan.fields.title.scrollWidth<=fan.fields.title.clientWidth || title.top<power.bottom-1 || title.bottom>speed.top+1) throw new Error('Deployed alias title overlaps controls');
+        for (const card of topCards) {
+          const bounds=card.shell.getBoundingClientRect();
+          if (bounds.left<0 || bounds.top<0 || bounds.right>innerWidth+1 || bounds.bottom>innerHeight+1) throw new Error('Deployment card outside viewport');
+        }
+      });
+      await page.screenshot({path:path.join(__dirname,`preview-guest-deployed-${width}x${height}.png`)});
+    }
+    assert.deepEqual(errors,[]);
+    results.push('Supplied Guest layout: legacy fan alias, unshortened entity name, off state, ignored legacy options, original Header/Weather defaults and unchanged native sizing at 960×480/800×400');
+    await open(1,960,480,'legacy-reference');
+    await page.evaluate(async () => {
+      const frame=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      const media=topCards.find(card=>card.kind==='media');
+      const parent=document.createElement('div');document.body.append(parent);parent.append(media);
+      const options=JSON.stringify(media.getGridOptions());let previousSize=0;
+      for (const [width,height] of [[616,188],[850,396],[300,440],[240,360],[320,120]]) {
+        parent.style.cssText=`width:${width}px;height:${height}px`;await frame();
+        const art=media.childrenCards[0].shell.getBoundingClientRect();
+        const bounds=media.shell.getBoundingClientRect();const info=media.info.getBoundingClientRect();
+        const controls=media.childrenCards.slice(1).map(card=>card.shell.getBoundingClientRect());
+        if (Math.abs(art.width-art.height)>1) throw new Error('Media artwork is not square');
+        if (height>width) {
+          if (art.bottom>info.top+1 || info.bottom>controls[0].top+1) throw new Error('Portrait media did not stack artwork/text/controls');
+        } else if (controls.some(box=>Math.abs(box.bottom-art.bottom)>1)) throw new Error('Landscape art and controls do not share bottom edge');
+        for (const box of [art,info,...controls]) if (box.top<bounds.top-1 || box.bottom>bounds.bottom+1 || box.left<bounds.left-1 || box.right>bounds.right+1) throw new Error('Responsive media content clipped');
+        if (width===850 && art.width<=previousSize) throw new Error('Artwork failed to grow in taller landscape');
+        previousSize=art.width;
+        if (JSON.stringify(media.getGridOptions())!==options) throw new Error('Media changed native grid defaults');
+      }
+      parent.remove();
+    });
+    results.push('Media square artwork scales with allocation; landscape art/control bottom alignment and portrait stacking without clipping; unchanged native grid defaults');
+    for (const slider of [false,true]) {
+      await open(1,960,480,'legacy-reference');
+      await page.evaluate(slider=>{
+        const card=document.createElement('echo-toggle-card');card.id='gesture-control';
+        card.setConfig({type:'custom:echo-toggle-card',entity:'fan.demo_3',slider,name:'Gesture control',tap_action:{action:'more-info'},hold_action:{action:'none'},double_tap_action:{action:'toggle'},icon_tap_action:{action:'toggle'},icon_hold_action:{action:'more-info'},icon_double_tap_action:{action:'none'}});
+        card.style.cssText='width:320px;height:188px';document.body.append(card);card.hass=mockHass;
+      },slider);
+      const card=page.locator('#gesture-control');
+      const icon=slider ? card.locator('echo-fan-power-card .img-cell') : card.locator('.img-cell');
+      await icon.click();
+      assert.deepEqual(await page.evaluate(()=>calls.splice(0)),[{domain:'homeassistant',service:'toggle',data:{entity_id:'fan.demo_3'}}]);
+      assert.equal(await page.evaluate(()=>infos.length),0);
+      await icon.focus();await page.keyboard.press('Enter');
+      assert.equal(await page.evaluate(()=>calls.splice(0).length),1);
+      const iconBox=await icon.boundingBox();
+      await page.mouse.move(iconBox.x+10,iconBox.y+10);await page.mouse.down();await page.waitForTimeout(550);await page.mouse.up();
+      assert.deepEqual(await page.evaluate(()=>infos.splice(0)),['fan.demo_3']);
+      assert.equal(await page.evaluate(()=>calls.length),0);
+      const label=card.locator(slider?'[data-field="title"]':'.name');
+      await label.click();await page.waitForTimeout(350);
+      assert.deepEqual(await page.evaluate(()=>infos.splice(0)),['fan.demo_3']);
+      await label.dblclick();await page.waitForTimeout(350);
+      assert.equal(await page.evaluate(()=>calls.splice(0).length),1);
+      assert.equal(await page.evaluate(()=>infos.length),0);
+      if(slider){await card.locator('input').click();assert.equal(await page.evaluate(()=>infos.length),0);await page.evaluate(()=>calls.length=0);}
+      await page.evaluate(()=>{
+        const card=document.querySelector('#gesture-control');const original={...card.config,grid_options:{columns:8,rows:3},future_option:{keep:true}};
+        const editor=card.constructor.getConfigElement();editor.hass=mockHass;editor.setConfig(original);document.body.append(editor);
+        const form=editor.actionForm;
+        if(form.schema.length!==6 || form.schema.some(field=>!field.selector.ui_action || field.context.entity_id!=='entity')) throw new Error('Control gesture editor schema incomplete');
+        let emitted;editor.addEventListener('config-changed',event=>emitted=event.detail.config);
+        form.dispatchEvent(new CustomEvent('value-changed',{detail:{value:{icon_tap_action:{action:'more-info'},tap_action:{action:'none'}}}}));
+        if(emitted.icon_tap_action.action!=='more-info' || emitted.tap_action.action!=='none' || !emitted.future_option.keep || emitted.grid_options.columns!==8 || original.icon_tap_action.action!=='toggle') throw new Error('Gesture editor round trip lost config or mutated input');
+        card.setConfig(emitted);
+      });
+      await label.click();await page.waitForTimeout(350);
+      assert.equal(await page.evaluate(()=>infos.length),0);
+      // Pending single taps must be discarded when the card disconnects.
+      await page.evaluate(()=>{const card=document.querySelector('#gesture-control');card.setConfig({...card.config,tap_action:{action:'more-info'}})});
+      await label.click();await page.evaluate(()=>document.querySelector('#gesture-control').remove());await page.waitForTimeout(350);
+      assert.equal(await page.evaluate(()=>infos.length),0);
+    }
+    assert.deepEqual(errors,[]);
+    results.push('Toggle and slider Control card/icon gestures: pointer/keyboard, hold, delayed tap, double tap, explicit none, slider isolation, disconnect cleanup and six-action editor round trips');
     fs.writeFileSync(path.join(__dirname,'verification-results.json'),JSON.stringify({environment:'Headless Chromium; mocked Home Assistant, placeholder icons',passed:results},null,2));
     console.log(results.join('\n'));
   } finally { await browser.close(); }
