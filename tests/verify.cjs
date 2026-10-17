@@ -362,10 +362,12 @@ async function run() {
       const sameForm=editor.form;editor.setConfig(emitted);
       if (editor.form!==sameForm) throw new Error('Editing replaced form and lost input focus');
       const backgroundField=editor.form.schema.find(field=>field.name==='background_color');
-      if(!backgroundField?.selector.ui_color.include_state || editor.form.computeLabel(backgroundField)!=='Icon background color')throw new Error('Entity background color editor missing');
+      if(backgroundField?.selector.template.preview!==false || !editor.form.computeLabel(backgroundField).startsWith('Icon background color'))throw new Error('Entity background template editor missing');
       for(const [state,expected] of [['on','rgb(228, 245, 236)'],['off','rgb(240, 242, 245)'],['unavailable','rgb(240, 242, 245)']]){
         card.setConfig({...base,color:'#3478F6'});
         card.hass={...mockHass,states:{...mockHass.states,[base.entity]:{...mockHass.states[base.entity],state}}};
+        // The mock's default-template evaluator reads its backing state map.
+        patchState(base.entity,state);await card.templateReady;
         if(getComputedStyle(card.iconCell).backgroundColor!==expected)throw new Error('Default entity background changed');
         card.setConfig({...card.config,background_color:'#FFE4B5'});
         if(getComputedStyle(card.iconCell).backgroundColor!=='rgb(255, 228, 181)' || getComputedStyle(card.icon).color!=='rgb(52, 120, 246)')throw new Error('Independent background override ignored');
@@ -377,7 +379,9 @@ async function run() {
       editor.form.submitPatch({background_color:'#FFE4B5'});
       if(emitted.background_color!=='#FFE4B5' || emitted.color!=='#3478F6' || emitted.future_key!=='keep' || emitted.grid_options.rows!==2 || configured.background_color)throw new Error('Background editor round trip lost settings or mutated config');
       editor.setConfig(emitted);editor.form.submitPatch({background_color:''});
-      if(Object.hasOwn(emitted,'background_color'))throw new Error('Clearing background did not restore default');
+      const {entityAppearanceDefaults}=await import('../frontend/echo-entity-templates.js');
+      if(emitted.background_color!==entityAppearanceDefaults.background_color)throw new Error('Clearing background did not restore default template');
+      patchState(base.entity,'on');
       const container=document.createElement('echo-container-card');document.body.append(container);
       for (const count of [0,1,2,4,7]) {
         container.setConfig({type:'custom:echo-container-card',columns:2,cards:Array.from({length:count},()=>({type:'custom:echo-entity-card',entity:'weather.demo_13'}))});
@@ -529,7 +533,7 @@ async function run() {
         return ()=>{stream.closed=true;};
       }};
       const header=document.createElement('echo-header-card');
-      header.setConfig({type:'custom:echo-header-card',name:'Original',templates:{title:'{{ title }}',time:'{{ now() }}',greeting:'{{ greeting }}'}});
+      header.setConfig({type:'custom:echo-header-card',name:'Original',templates:{title:'{{ title }}',time:'{{ now() }}',greeting:'{{ greeting }}',future_template:'{{ ignored }}'}});
       header.hass={...mockHass,connection};document.body.append(header);await header.templateReady;
       if (streams.length!==4 || streams.some(stream=>stream.parameters.type!=='render_template' || stream.parameters.strict!==true)) throw new Error('Wrong template subscription protocol');
       streams[0].callback({result:'A reusable header'});
@@ -1005,6 +1009,70 @@ async function run() {
       if(Math.abs(art.height-140)>1 || Math.abs(art.bottom-(padded.bottom-24))>1)throw new Error('Media sizing ignored actual CSS padding');wrapper.remove();
     });
     results.push('Action-specific accessibility; explicit compact media fallback and artwork sizing from actual CSS measurements');
+    await open(1,960,480,'legacy-reference');
+    await page.evaluate(async () => {
+      const {entityAppearanceDefaults}=await import('../frontend/echo-entity-templates.js');
+      const card=document.createElement('echo-entity-card');document.body.append(card);
+      for (const [entity,state,color,background,icon] of [
+        ['light.demo_5','on','rgb(198, 139, 20)','rgb(255, 240, 205)','mdi:lightbulb'],
+        ['light.demo_5','off','rgb(139, 147, 160)','rgb(240, 242, 245)','mdi:lightbulb'],
+        ['lock.demo_9','locked','rgb(33, 146, 109)','rgb(228, 245, 236)','mdi:lock-outline'],
+        ['lock.demo_9','unlocked','rgb(201, 116, 69)','rgb(253, 236, 227)','mdi:lock-open-outline'],
+        ['cover.demo_2','closed','rgb(33, 146, 109)','rgb(228, 245, 236)','mdi:garage'],
+        ['cover.demo_2','open','rgb(201, 116, 69)','rgb(253, 236, 227)','mdi:garage-open'],
+        ['fan.demo_3','on','rgb(33, 146, 109)','rgb(228, 245, 236)','mdi:fan'],
+        ['light.demo_5','unavailable','rgb(139, 147, 160)','rgb(240, 242, 245)','mdi:lightbulb'],
+      ]){
+        patchState(entity,state);card.setConfig({entity});card.hass=mockHass;await card.templateReady;
+        if(getComputedStyle(card.icon).color!==color || getComputedStyle(card.iconCell).backgroundColor!==background || card.icon.getAttribute('icon')!==icon)throw new Error(`Wrong Entity default: ${entity}/${state}`);
+      }
+      patchState('light.demo_5','on',{icon:'mdi:lamp'});card.hass=mockHass;
+      if(card.icon.getAttribute('icon')!=='mdi:lamp')throw new Error('Entity-provided icon ignored');
+      const editor=card.constructor.getConfigElement();
+      const config={type:'custom:echo-entity-card',entity:'light.demo_5',grid_options:{columns:6,rows:2},visibility:[{condition:'user',users:['test']}],future_key:true};
+      editor.setConfig(config);editor.hass=mockHass;
+      for(const key of Object.keys(entityAppearanceDefaults))if(editor.form.data[key]!==entityAppearanceDefaults[key] || editor.form.schema.find(field=>field.name===key)?.selector.template.preview!==false)throw new Error('Native Entity Jinja source missing');
+      let emitted;editor.addEventListener('config-changed',event=>emitted=event.detail.config);
+      const source="  {% if is_state(entity, 'on') %}\n#ABCDEF\n{% else %}#123456{% endif %}  ";
+      editor.form.submitPatch({color:source,background_color:'#FFE4B5',icon:"{{ 'mdi:lamp' if is_state(entity, 'on') else 'mdi:lamp-outline' }}"});
+      if(emitted.color!==source || config.color || emitted.grid_options.rows!==2 || !emitted.future_key || emitted.visibility[0].users[0]!=='test')throw new Error('Entity editor mutated source or dropped layout');
+      const form=editor.form;editor.setConfig({...emitted,entity:'lock.demo_9'});
+      if(editor.form!==form || form.data.color!==source)throw new Error('Entity edit replaced form or custom templates');
+      editor.form.submitPatch({color:'state',background_color:'',icon:''});
+      for(const key of Object.keys(entityAppearanceDefaults))if(emitted[key]!==entityAppearanceDefaults[key])throw new Error('Legacy/default reset failed');
+      card.remove();
+    });
+    results.push('Entity prefilled Jinja defaults for lights/locks/covers/fans and unavailable states; state icons; native template-editor source preservation and compatible reset');
+    await page.evaluate(async () => {
+      const streams=[];let subscribed=0;
+      const connection={subscribeMessage:async(callback,parameters)=>{subscribed++;const stream={callback,parameters,closed:false};streams.push(stream);return ()=>stream.closed=true;}};
+      const config={entity:'light.demo_5',color:'{{ custom_color }}',background_color:'{{ custom_background }}',icon:'{{ custom_icon }}'};
+      const card=document.createElement('echo-entity-card');card.setConfig(config);card.hass={...mockHass,connection};document.body.append(card);await card.templateReady;
+      if(streams.length!==3 || streams.some(stream=>stream.parameters.type!=='render_template' || !stream.parameters.strict || stream.parameters.variables.entity!==config.entity))throw new Error('Entity template protocol incorrect');
+      const send=(key,value)=>streams.find(stream=>!stream.closed && stream.parameters.variables.template_slot===key).callback(value);
+      send('color',{result:'  #ABCDEF  '});send('background_color',{result:'#112233'});send('icon',{result:'mdi:lamp-outline'});
+      if(getComputedStyle(card.icon).color!=='rgb(171, 205, 239)' || getComputedStyle(card.iconCell).backgroundColor!=='rgb(17, 34, 51)' || card.icon.getAttribute('icon')!=='mdi:lamp-outline')throw new Error('Custom Entity template output ignored');
+      card.hass={...mockHass,connection};if(subscribed!==3)throw new Error('Hass update duplicated Entity subscriptions');
+      send('color',{result:'red'});send('icon',{result:'mdi:lamp'});
+      if(getComputedStyle(card.icon).color!=='rgb(255, 0, 0)' || card.icon.getAttribute('icon')!=='mdi:lamp')throw new Error('Reactive Entity output ignored');
+      send('icon',{result:'phu:ceiling-fan'});if(card.icon.getAttribute('icon')!=='phu:ceiling-fan')throw new Error('Custom icon namespace lost');
+      send('color',{error:'Invalid Jinja'});if(!card.hasAttribute('template-error') || getComputedStyle(card.icon).color!=='rgb(139, 147, 160)')throw new Error('Entity error fallback missing');
+      send('color',{result:'#0000FF'});if(card.hasAttribute('template-error'))throw new Error('Entity error recovery failed');
+      send('background_color',{result:'<img src=x onerror=alert(1)>'});send('icon',{result:'<script>alert(1)</script>'});
+      if(card.shadowRoot.querySelector('script') || card.icon.getAttribute('icon')!=='' || getComputedStyle(card.iconCell).backgroundColor!=='rgb(240, 242, 245)')throw new Error('Unsafe Entity appearance output accepted');
+      card.setConfig({...config,entity:'lock.demo_9'});await card.templateReady;await Promise.resolve();
+      streams[0].callback({result:'#FF0000'});
+      if(streams.slice(0,3).some(stream=>!stream.closed) || getComputedStyle(card.icon).color==='rgb(255, 0, 0)' || streams.at(-1).parameters.variables.entity!=='lock.demo_9')throw new Error('Stale Entity subscription applied after entity change');
+      card.remove();await Promise.resolve();await Promise.resolve();if(streams.some(stream=>!stream.closed))throw new Error('Entity subscriptions leaked');
+      document.body.append(card);await card.templateReady;if(streams.at(-1).closed)throw new Error('Entity templates did not reconnect');
+      card.hass={...mockHass,connection:null};await Promise.resolve();await Promise.resolve();
+      if(streams.some(stream=>!stream.closed))throw new Error('Lost connection retained template subscriptions');card.remove();
+      let resolve;let cleaned=0;
+      const pending=document.createElement('echo-entity-card');pending.setConfig({entity:'light.demo_5',color:'{{ late }}',background_color:'#ffffff',icon:'mdi:lamp'});
+      pending.hass={...mockHass,connection:{subscribeMessage:()=>new Promise(done=>resolve=done)}};document.body.append(pending);pending.remove();resolve(()=>cleaned++);await pending.templateReady;
+      if(cleaned!==1)throw new Error('Late Entity subscription leaked after disconnect');
+    });
+    results.push('Entity backend template protocol, reactive icon/colors, safe output, errors/recovery, stale-response guards, entity/connection changes and subscription cleanup');
     assert.deepEqual(errors,[]);
     fs.writeFileSync(path.join(__dirname,'verification-results.json'),JSON.stringify({environment:'Headless Chromium; mocked Home Assistant, placeholder icons',passed:results},null,2));
     console.log(results.join('\n'));

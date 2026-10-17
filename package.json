@@ -1,6 +1,6 @@
 {
   "name": "ha-simply-cards",
-  "version": "0.1.1-beta.2",
+  "version": "0.1.1-beta.3",
   "private": true,
   "description": "Reusable custom Home Assistant cards with visual editors and native grid support",
   "repository": "github:davinche/ha-simply-cards",

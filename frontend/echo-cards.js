@@ -1,3 +1,4 @@
+import { startTemplates, stopTemplates, templateValue } from './echo-templates.js';
 import { cardStyles } from './echo-styles.js';
 import { stubConfig, sliderCapability, textFields, normalizeTextConfig } from './echo-card-editor.js';
 import './echo-entity-cards.js';
@@ -295,51 +296,9 @@ class EchoCard extends HTMLElement {
   }
   stopSizing() { this.resizeObserver?.disconnect(); this.resizeObserver = null; }
 
-  stopTemplates() {
-    this.templateRevision = (this.templateRevision || 0) + 1;
-    for (const unsubscribe of this.templateSubscriptions || []) Promise.resolve().then(unsubscribe).catch(() => {});
-    this.templateSubscriptions = [];
-    this.templateValues = {};
-    this.templateErrors = {};
-    this.templateConnection = null;
-    this.removeAttribute('template-error');
-  }
+  stopTemplates() { stopTemplates(this); }
   startTemplates() {
-    if (!this.isConnected || !this.config || !textFields[this.kind]) return;
-    const connection = this._hass?.connection;
-    const unit = this._hass?.config?.unit_system?.temperature || '°F';
-    if (!connection?.subscribeMessage || connection === this.templateConnection && unit === this.templateUnit) return;
-    this.stopTemplates();
-    this.templateConnection = connection;
-    this.templateUnit = unit;
-    const revision = this.templateRevision;
-    const slots = Object.keys(textFields[this.kind]);
-    this.templateReady = Promise.all(slots.map(async slot => {
-      const template = this.config.templates?.[slot];
-      if (typeof template !== 'string' || !/\{[{%#]/.test(template)) return;
-      try {
-        const unsubscribe = await connection.subscribeMessage(message => {
-          if (revision !== this.templateRevision) return;
-          if (message.error) {
-            delete this.templateValues[slot];
-            if (this.templateErrors[slot] !== String(message.error)) this.dispatchEvent(new CustomEvent('hass-notification', { detail: { message: `${this.kind} ${slot} template: ${message.error}` }, bubbles: true, composed: true }));
-            this.templateErrors[slot] = String(message.error);
-          } else {
-            this.templateValues[slot] = String(message.result ?? '');
-            delete this.templateErrors[slot];
-          }
-          this.toggleAttribute('template-error', Object.keys(this.templateErrors).length > 0);
-          this.update();
-        }, { type: 'render_template', template, variables: { config: this.config, entity: this.config.entity || null, temperature_unit: unit, template_slot: slot }, strict: true, report_errors: true });
-        if (revision !== this.templateRevision) await unsubscribe();
-        else this.templateSubscriptions.push(unsubscribe);
-      } catch (error) {
-        if (revision !== this.templateRevision) return;
-        this.templateErrors[slot] = error.message;
-        this.setAttribute('template-error', '');
-        this.update();
-      }
-    }));
+    if (this.config && textFields[this.kind]) startTemplates(this, Object.fromEntries(Object.keys(textFields[this.kind]).map(key => [key, this.config.templates[key]])));
   }
 
   field(name, className = '', tag = 'div') {
@@ -357,11 +316,7 @@ class EchoCard extends HTMLElement {
       : { room: 'title', clock: 'time', eyebrow: 'label' }[name] || name;
     if (this.fields[name]) this.fields[name].textContent = textFields[this.kind]?.[slot] ? this.displayText(slot) : value;
   }
-  displayText(slot) {
-    const template = this.config.templates[slot];
-    if (!/\{[{%#]/.test(template)) return template;
-    return this.templateErrors?.[slot] ? '—' : this.templateValues?.[slot] ?? '…';
-  }
+  displayText(slot) { return templateValue(this, this.config.templates[slot], slot); }
   icon() {
     this.iconCell = document.createElement('div');
     this.iconCell.className = 'img-cell';

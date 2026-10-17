@@ -23,6 +23,7 @@
   await import('./native-mocks.js');
   await import('../frontend/echo-cards.js');
   const {templateDefaults}=await import('../frontend/echo-card-editor.js');
+  const {entityAppearanceDefaults}=await import('../frontend/echo-entity-templates.js');
   const params = new URLSearchParams(location.search);
   const mode = params.get('mode') || 'legacy';
   const fixture = await fetch(mode === 'legacy' ? './dashboard-fixture.json' : `./${mode}-fixture.json`).then(response => response.json());
@@ -58,6 +59,14 @@
   const templateStreams=new Set();
   function renderDefaultTemplate(parameters) {
     const {config,entity,template_slot:slot,temperature_unit:unit}=parameters.variables;
+    if (Object.hasOwn(entityAppearanceDefaults,slot) && parameters.template===entityAppearanceDefaults[slot]) {
+      const source=states[entity];const state=source?.state || 'unavailable';const domain=entity.split('.')[0];
+      const inactive=['off','idle','standby','unknown','unavailable'].includes(state);
+      const positive=['locked','closed','on','playing','home'].includes(state);
+      if(slot==='color')return inactive?'#8B93A0':domain==='light'&&state==='on'?'#C68B14':positive?'#21926D':'#C97445';
+      if(slot==='background_color')return inactive?'#F0F2F5':domain==='light'&&state==='on'?'#FFF0CD':positive?'#E4F5EC':'#FDECE3';
+      return source?.attributes.icon || ({lock:state==='locked'?'mdi:lock-outline':'mdi:lock-open-outline',cover:state==='closed'?'mdi:garage':'mdi:garage-open',light:'mdi:lightbulb',switch:'mdi:power',fan:'mdi:fan',sensor:'mdi:eye',binary_sensor:'mdi:checkbox-marked-circle-outline',climate:'mdi:thermometer',media_player:'mdi:music'})[domain] || 'mdi:information-outline';
+    }
     const kind=config.type?.includes('weather') ? 'weather' : config.type?.includes('climate') || entity?.startsWith('climate.') ? 'climate' : 'header';
     const defaults=templateDefaults(kind);
     if (parameters.template!==defaults[slot]) return parameters.template;
