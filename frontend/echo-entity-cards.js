@@ -2,6 +2,8 @@ import { gestures, actionNames, usable, bindCardGestures, cancelCardGestures, ru
 import { cardStyles } from './echo-styles.js';
 
 const emit = (node, name, detail) => node.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
+const resolveColor = (value, fallback) => !value || value === 'state' ? fallback
+  : CSS.supports('color', value) ? value : `var(--${value}-color,${fallback})`;
 const sharedStyle = `
 :host{display:block;height:100%;min-height:0;min-width:0;font-family:var(--paper-font-body1_-_font-family,Roboto,Arial,sans-serif)}
 *{box-sizing:border-box}[hidden]{display:none!important}
@@ -90,9 +92,8 @@ class EchoEntityCard extends EchoStyledCard {
     let color = positive ? '#21926D' : inactive ? '#8B93A0' : '#C97445';
     let background = positive ? '#E4F5EC' : inactive ? '#F0F2F5' : '#FDECE3';
     if (!usable(entity)) { color = '#8B93A0'; background = '#F0F2F5'; }
-    if (this.config.color && this.config.color !== 'state') {
-      color = CSS.supports('color', this.config.color) ? this.config.color : `var(--${this.config.color}-color,${color})`;
-    }
+    color = resolveColor(this.config.color, color);
+    background = resolveColor(this.config.background_color, background);
     this.style.setProperty('--state-color', color);
     this.style.setProperty('--state-background', background);
     const defaults = { lock: state === 'locked' ? 'mdi:lock-outline' : 'mdi:lock-open-outline', cover: state === 'closed' ? 'mdi:garage' : 'mdi:garage-open', light: 'mdi:lightbulb', switch: 'mdi:power', fan: 'mdi:fan', sensor: 'mdi:eye', binary_sensor: 'mdi:checkbox-marked-circle-outline', climate: 'mdi:thermometer', media_player: 'mdi:music' };
@@ -238,6 +239,7 @@ class EchoGenericEditor extends HTMLElement {
     ] : [
       { name: 'entity', required: true, selector: { entity: {} } }, { name: 'name', selector: { text: {} } },
       { name: 'icon', selector: { icon: {} } }, { name: 'color', selector: { ui_color: { include_state: true, default_color: 'state' } } },
+      { name: 'background_color', selector: { ui_color: { include_state: true, default_color: 'state' } } },
       { name: 'hide_state', selector: { boolean: {} } }, { name: 'show_entity_picture', selector: { boolean: {} } },
       { name: 'vertical', selector: { boolean: {} } },
       { name: 'state_content', selector: { ui_state_content: {} }, context: { filter_entity: 'entity' } },
@@ -249,7 +251,7 @@ class EchoGenericEditor extends HTMLElement {
     const defaults = container ? { columns: 3, square: false } : { vertical: true, ...Object.fromEntries(['', 'icon_'].flatMap(prefix => gestures.map(gesture => [`${prefix}${gesture}_action`, { action: 'none' }])))};
     this.defaults = defaults;
     this.form.data = { ...defaults, ...this.config };
-    this.form.computeLabel = schema => schema.name.replace(/_/g, ' ').replace(/^./, character => character.toUpperCase());
+    this.form.computeLabel = schema => ({ color: 'Icon color', background_color: 'Icon background color' }[schema.name] || schema.name.replace(/_/g, ' ').replace(/^./, character => character.toUpperCase()));
     this.form.addEventListener('value-changed', event => {
       event.stopPropagation();
       const next = { ...this.config };

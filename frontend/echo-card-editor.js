@@ -34,7 +34,7 @@ export function templateDefaults(kind) {
     target_temperature: targetText,
     current_temperature: "{% set value = state_attr(entity, 'current_temperature') %}{% if config.get('show_temperature_control', false) %}Current {{ ('%g' | format(value)) ~ temperature_unit if value is number else '—' ~ temperature_unit }}{% else %}{{ (value | round(0) | int | string) ~ temperature_unit if value is number else '--' }}{% endif %}",
     target_label: "{{ 'Heat to' if config.get('temperature_target') == 'low' else 'Cool to' if config.get('temperature_target') == 'high' else 'Set to' }}",
-    hint: 'Tap to adjust',
+    hint: '',
   };
   return {};
 }

@@ -361,6 +361,23 @@ async function run() {
       if (emitted.type!=='custom:echo-entity-card' || emitted.name!=='Changed in visual editor' || emitted.grid_options.rows!==2 || emitted.future_key!=='keep' || emitted.visibility[0].users[0]!=='test') throw new Error('Visual editor round trip lost config');
       const sameForm=editor.form;editor.setConfig(emitted);
       if (editor.form!==sameForm) throw new Error('Editing replaced form and lost input focus');
+      const backgroundField=editor.form.schema.find(field=>field.name==='background_color');
+      if(!backgroundField?.selector.ui_color.include_state || editor.form.computeLabel(backgroundField)!=='Icon background color')throw new Error('Entity background color editor missing');
+      for(const [state,expected] of [['on','rgb(228, 245, 236)'],['off','rgb(240, 242, 245)'],['unavailable','rgb(240, 242, 245)']]){
+        card.setConfig({...base,color:'#3478F6'});
+        card.hass={...mockHass,states:{...mockHass.states,[base.entity]:{...mockHass.states[base.entity],state}}};
+        if(getComputedStyle(card.iconCell).backgroundColor!==expected)throw new Error('Default entity background changed');
+        card.setConfig({...card.config,background_color:'#FFE4B5'});
+        if(getComputedStyle(card.iconCell).backgroundColor!=='rgb(255, 228, 181)' || getComputedStyle(card.icon).color!=='rgb(52, 120, 246)')throw new Error('Independent background override ignored');
+        card.setConfig({...card.config,background_color:'state'});
+        if(getComputedStyle(card.iconCell).backgroundColor!==expected)throw new Error('State background not restored');
+      }
+      card.style.setProperty('--amber-color','#FFBF00');card.setConfig({...card.config,background_color:'amber'});
+      if(getComputedStyle(card.iconCell).backgroundColor!=='rgb(255, 191, 0)')throw new Error('Theme background color ignored');
+      editor.form.submitPatch({background_color:'#FFE4B5'});
+      if(emitted.background_color!=='#FFE4B5' || emitted.color!=='#3478F6' || emitted.future_key!=='keep' || emitted.grid_options.rows!==2 || configured.background_color)throw new Error('Background editor round trip lost settings or mutated config');
+      editor.setConfig(emitted);editor.form.submitPatch({background_color:''});
+      if(Object.hasOwn(emitted,'background_color'))throw new Error('Clearing background did not restore default');
       const container=document.createElement('echo-container-card');document.body.append(container);
       for (const count of [0,1,2,4,7]) {
         container.setConfig({type:'custom:echo-container-card',columns:2,cards:Array.from({length:count},()=>({type:'custom:echo-entity-card',entity:'weather.demo_13'}))});
@@ -381,7 +398,7 @@ async function run() {
       card.remove();container.remove();
     });
     assert.deepEqual(errors,[]);
-    results.push('Entity/Container own rendering, no implicit actions, visual form round trips and arbitrary child counts 0/1/2/4/7; add/remove child editing verified');
+    results.push('Entity/Container own rendering, independent icon/background colors with state/theme defaults, no implicit actions, visual form round trips and arbitrary child counts 0/1/2/4/7; add/remove child editing verified');
     await page.evaluate(async () => {
       const items=[{entity:'lock.demo_9',name:'Front Door'},{entity:'lock.demo_8',name:'Back Door'},{entity:'cover.demo_2',name:'Garage',icon:'mdi:garage'}];
       const rect=(element,parent) => {
@@ -615,6 +632,10 @@ async function run() {
       card.setConfig({entity:'climate.demo_1',show_temperature_control:true,templates:{title:'Custom title',status:'Custom status',target_temperature:'Comfort zone',current_temperature:'Current text'}});
       card.hass=mockHass;document.body.append(card);await card.templateReady;
       if (card.temperatureReadout.textContent!=='Comfort zone' || card.fields.n.textContent!=='Custom title' || card.fields.l.textContent!=='Custom status' || card.fields.hint.textContent!=='Current text') throw new Error('Climate text editor does not own display');
+      const defaultClimate=document.createElement('echo-climate-card');defaultClimate.setConfig({entity:'climate.demo_1'});
+      if(defaultClimate.config.templates.hint!=='' || defaultClimate.fields.hint.textContent!=='')throw new Error('Default climate hint should be blank');
+      defaultClimate.setConfig({...defaultClimate.config,templates:{...defaultClimate.config.templates,hint:'Custom hint'}});
+      if(defaultClimate.fields.hint.textContent!=='Custom hint')throw new Error('Custom climate hint lost');
       const actual=mockHass.states['climate.demo_1'];actual.state='cool';actual.attributes={...actual.attributes,temperature:74,min_temp:60,max_temp:85,target_temp_step:1,supported_features:1};card.hass=mockHass;
       await card.adjustTemperature(1);
       if (calls.pop().data.temperature!==75 || card.temperatureReadout.textContent!=='Comfort zone' || getComputedStyle(card.iconElement).color!=='rgb(52, 120, 246)') throw new Error('Display templates changed numerical control or HVAC colors');
