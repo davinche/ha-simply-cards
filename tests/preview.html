@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Echo cards · simulated Home Assistant</title>
+<style>
+  html,body{margin:0;background:#F7F8FA;font-family:Roboto,Arial,sans-serif}
+  #dashboard{display:grid;box-sizing:border-box;width:100vw}
+</style>
+<div id="dashboard"></div>
+<script type="module">
+  customElements.define('ha-card', class extends HTMLElement {});
+  customElements.define('ha-icon', class extends HTMLElement {
+    static get observedAttributes() { return ['icon']; }
+    constructor() { super(); this.attachShadow({mode:'open'}); }
+    attributeChangedCallback() {
+      const name = this.getAttribute('icon');
+      this.shadowRoot.textContent = ({'mdi:play':'▶','mdi:pause':'Ⅱ','mdi:skip-previous':'◀','mdi:skip-next':'▶','mdi:volume-high':'♫','mdi:volume-off':'×','mdi:weather-sunny':'☀','mdi:thermometer':'♨','mdi:fan':'✣','mdi:lock-outline':'▣','mdi:lock-open-outline':'□','mdi:music-note':'♪'})[name] || '◇';
+      const style = document.createElement('style');
+      style.textContent = ':host{font-size:22px;text-align:center;line-height:1.2}';
+      this.shadowRoot.append(style);
+    }
+  });
+  await import('./native-mocks.js');
+  await import('../frontend/echo-cards.js');
+  const {templateDefaults}=await import('../frontend/echo-card-editor.js');
+  const params = new URLSearchParams(location.search);
+  const mode = params.get('mode') || 'legacy';
+  const fixture = await fetch(mode === 'legacy' ? './dashboard-fixture.json' : `./${mode}-fixture.json`).then(response => response.json());
+  const index = Number(params.get('view') || 0);
+  const view = fixture.views[index];
+  const layout = view.cards?.[0];
+  const dashboard = document.querySelector('#dashboard');
+  if (mode === 'legacy' || mode === 'legacy-reference') {
+    for (const [name,value] of Object.entries(layout.layout)) dashboard.style.setProperty(name,String(value));
+  } else {
+    dashboard.style.padding = '16px';
+    dashboard.style.gap = '8px';
+  }
+  window.calls = [];
+  window.infos = [];
+  window.notifications = [];
+  const states = {};
+  function addEntity(id) {
+    if (!id || states[id]) return;
+    const domain = id.split('.')[0];
+    const state = ({weather:'sunny',climate:'cool',lock:'locked',cover:'closed',media_player:'playing'})[domain] || 'on';
+    states[id] = { entity_id:id, state, attributes:{temperature:74,current_temperature:72,humidity:31,percentage:50,percentage_step:25,media_title:'Test track',media_album_name:'Test album',is_volume_muted:false} };
+  }
+  function collect(config) {
+    if (!config || typeof config !== 'object') return;
+    addEntity(config.entity);
+    for (const value of Object.values(config)) {
+      if (Array.isArray(value)) value.forEach(collect);
+      else if (value && typeof value === 'object') collect(value);
+    }
+  }
+  collect(view);
+  const templateStreams=new Set();
+  function renderDefaultTemplate(parameters) {
+    const {config,entity,template_slot:slot,temperature_unit:unit}=parameters.variables;
+    const kind=config.type?.includes('weather') ? 'weather' : config.type?.includes('climate') || entity?.startsWith('climate.') ? 'climate' : 'header';
+    const defaults=templateDefaults(kind);
+    if (parameters.template!==defaults[slot]) return parameters.template;
+    const source=states[entity];const attributes=source?.attributes || {};const state=source?.state || 'unavailable';
+    const now=new Date();
+    if (kind==='header') return {time:now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}),date:now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}),greeting:now.getHours()<12?'Good morning':now.getHours()<17?'Good afternoon':'Good evening'}[slot];
+    if (kind==='weather') return {
+      condition:state==='partlycloudy'?'Partly Cloudy':state.replace(/-/g,' ').replace(/\b\w/g,character=>character.toUpperCase()),
+      temperature:attributes.temperature==null?'--':Math.round(attributes.temperature)+(attributes.temperature_unit || unit),
+      humidity:attributes.humidity==null?'':`Humidity ${attributes.humidity}%`,
+      icon:({'clear-night':'mdi:weather-night',sunny:'mdi:weather-sunny',partlycloudy:'mdi:weather-partly-cloudy',cloudy:'mdi:weather-cloudy',rainy:'mdi:weather-rainy',pouring:'mdi:weather-pouring',snowy:'mdi:weather-snowy',lightning:'mdi:weather-lightning'})[state] || 'mdi:weather-partly-cloudy',
+    }[slot];
+    const target=attributes[config.temperature_target==='low'?'target_temp_low':config.temperature_target==='high'?'target_temp_high':'temperature'];
+    return {
+      title:attributes.friendly_name || entity,
+      status:state.charAt(0).toUpperCase()+state.slice(1)+(config.show_temperature_control?'':` · ${attributes.temperature==null?'--':Math.round(attributes.temperature)}${unit}`),
+      target_temperature:target==null?'—':`${target}${unit}`,
+      current_temperature:config.show_temperature_control?`Current ${attributes.current_temperature ?? '—'}${unit}`:attributes.current_temperature==null?'--':Math.round(attributes.current_temperature)+unit,
+      target_label:config.temperature_target==='low'?'Heat to':config.temperature_target==='high'?'Cool to':'Set to',
+    }[slot];
+  }
+  const connection={subscribeMessage:async (callback,parameters)=>{
+    const stream={callback,parameters};templateStreams.add(stream);callback({result:renderDefaultTemplate(parameters)});
+    return ()=>templateStreams.delete(stream);
+  }};
+  window.mockHass = {
+    states, connection, config:{unit_system:{temperature:'°F'}}, hassUrl:path => location.origin + path,
+    callService:async (domain,service,data) => {
+      window.calls.push({domain,service,data});
+      if (window.rejectService) throw new Error('Simulated service failure');
+    },
+  };
+  window.refresh = () => {
+    for (const card of window.topCards) card.hass = window.mockHass;
+    for (const stream of templateStreams) stream.callback({result:renderDefaultTemplate(stream.parameters)});
+  };
+  window.patchState = (id,state,attributes={}) => {
+    states[id] = {...states[id],state,attributes:{...states[id]?.attributes,...attributes}};
+    window.refresh();
+  };
+  document.addEventListener('hass-more-info',event => window.infos.push(event.detail.entityId));
+  document.addEventListener('hass-notification',event => window.notifications.push(event.detail.message));
+  window.topCards = [];
+  function render(config) {
+    if (config.type === 'heading') {
+      const heading = document.createElement('h3');
+      heading.textContent = config.heading;
+      heading.style.margin = '8px 0';
+      return heading;
+    }
+    if (config.type === 'conditional') {
+      return config.conditions.every(condition => matchMedia(condition.media_query).matches) ? render(config.card) : document.createElement('template');
+    }
+    if (config.type.startsWith('custom:echo-')) {
+      const card = document.createElement(config.type.replace('custom:',''));
+      card.setConfig(config);
+      window.topCards.push(card);
+      return card;
+    }
+    const element = document.createElement('div');
+    element.style.display = 'grid';
+    element.style.gap = '8px';
+    if (config.type === 'grid' || config.type === 'horizontal-stack') {
+      element.style.gridTemplateColumns = `repeat(${config.columns || config.cards.length},minmax(0,1fr))`;
+    }
+    for (const child of config.cards || []) element.append(render(child));
+    return element;
+  }
+  if (mode === 'legacy' || mode === 'legacy-reference') {
+    for (const config of layout.cards) {
+      const card = render(config);
+      card.style.gridArea = config.view_layout['grid-area'];
+      dashboard.append(card);
+    }
+  } else if (mode === 'reference') {
+    dashboard.style.gridTemplateColumns = `repeat(${innerWidth >= 720 ? 2 : 1},minmax(0,1fr))`;
+    dashboard.style.alignItems = 'start';
+    for (const section of view.sections) {
+      const group = document.createElement('div');
+      group.style.cssText = 'display:grid;gap:8px';
+      for (const config of section.cards) {
+        const card = render(config);
+        if (config.type.startsWith('custom:echo-')) {
+          const wrapper = document.createElement('div');
+          wrapper.style.height = `${config.grid_options.rows*64-8}px`;
+          card.layout = 'grid';
+          wrapper.append(card);
+          group.append(wrapper);
+        } else group.append(card);
+      }
+      dashboard.append(group);
+    }
+  } else if (mode === 'echo5-fit') {
+    const unit = Math.min(innerWidth/960,innerHeight/480);
+    const columns = innerWidth >= 720 ? 24 : 12;
+    dashboard.style.padding = `${16*unit}px ${16*unit}px ${12*unit}px`;
+    dashboard.style.gap = `${12*unit}px`;
+    for (const section of view.sections) {
+      const group = document.createElement('div');
+      group.style.cssText = `display:grid;grid-template-columns:repeat(${columns},minmax(0,1fr));column-gap:${12*unit}px;row-gap:0`;
+      for (const config of section.cards) {
+        const wrapper = document.createElement('div');
+        wrapper.style.gridColumn = `span ${Math.min(columns,config.grid_options.columns)}`;
+        wrapper.style.height = `${config.grid_options.rows * 4 * unit}px`;
+        const card = render(config);
+        card.layout = 'grid';
+        wrapper.append(card);
+        group.append(wrapper);
+      }
+      dashboard.append(group);
+    }
+  } else if (mode === 'native-sections') {
+    const columns = innerWidth >= 720 ? 24 : 12;
+    dashboard.style.gridTemplateColumns = `repeat(${columns},minmax(0,1fr))`;
+    for (const config of view.sections[0].cards) {
+      const wrapper = document.createElement('div');
+      wrapper.style.gridColumn = `span ${Math.min(columns,config.grid_options.columns)}`;
+      wrapper.style.height = `${config.grid_options.rows * 64 - 8}px`;
+      const card = render(config);
+      card.layout = 'grid';
+      wrapper.append(card);
+      dashboard.append(wrapper);
+    }
+  } else {
+    dashboard.append(render(layout));
+  }
+  window.refresh();
+  window.ready = true;
+</script>
+</html>

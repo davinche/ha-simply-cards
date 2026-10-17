@@ -1,0 +1,11 @@
+node_modules/
+dist/
+tests/*.png
+tests/verification-results.json
+test-results/
+playwright-report/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+*.local.*

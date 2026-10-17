@@ -1,0 +1,257 @@
+{
+  "title": "Echo Card Reference",
+  "views": [
+    {
+      "title": "Card Reference",
+      "path": "card-reference",
+      "icon": "mdi:view-dashboard-outline",
+      "type": "sections",
+      "max_columns": 2,
+      "sections": [
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Header / Clock"
+            },
+            {
+              "type": "custom:echo-header-card",
+              "templates": {
+                "title": "Card Reference",
+                "time": "{{ now().strftime('%I:%M %p').lstrip('0') }}",
+                "date": "{{ now().strftime('%A, %B') }} {{ now().day }}",
+                "greeting": "{{ 'Good morning' if now().hour < 12 else 'Good afternoon' if now().hour < 17 else 'Good evening' }}"
+              },
+              "grid_options": {
+                "columns": 12,
+                "rows": 2
+              }
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Weather"
+            },
+            {
+              "type": "custom:echo-weather-card",
+              "entity": "weather.demo_13",
+              "templates": {
+                "label": "Outside",
+                "condition": "{{ 'Partly Cloudy' if states(entity) == 'partlycloudy' else states(entity) | replace('-', ' ') | title }}",
+                "temperature": "{% set value = state_attr(entity, 'temperature') %}{{ (value | round(0) | int | string) ~ (state_attr(entity, 'temperature_unit') or temperature_unit) if value is number else '--' }}",
+                "humidity": "{% set value = state_attr(entity, 'humidity') %}{{ 'Humidity ' ~ value ~ '%' if value is not none else '' }}",
+                "icon": "{{ {'clear-night': 'mdi:weather-night', 'sunny': 'mdi:weather-sunny', 'partlycloudy': 'mdi:weather-partly-cloudy', 'cloudy': 'mdi:weather-cloudy', 'rainy': 'mdi:weather-rainy', 'pouring': 'mdi:weather-pouring', 'snowy': 'mdi:weather-snowy', 'lightning': 'mdi:weather-lightning'}.get(states(entity), 'mdi:weather-partly-cloudy') }}"
+              },
+              "grid_options": {
+                "columns": 12,
+                "rows": 2
+              }
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Control / On and Off"
+            },
+            {
+              "type": "custom:echo-toggle-card",
+              "entity": "switch.demo_12",
+              "name": "Main Lights",
+              "icon": "mdi:ceiling-light-multiple",
+              "grid_options": {
+                "columns": 12,
+                "rows": 2
+              }
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Thermostat"
+            },
+            {
+              "type": "custom:echo-climate-card",
+              "hvac_modes": [
+                "cool",
+                "heat"
+              ],
+              "entity": "climate.demo_1",
+              "icon": "mdi:thermometer",
+              "templates": {
+                "title": "Home Temperature",
+                "status": "{{ states(entity) | capitalize }}{% if not config.get('show_temperature_control', false) %} \u00b7 {% set value = state_attr(entity, 'temperature') %}{{ (value | round(0) | int | string) ~ temperature_unit if value is number else '--' ~ temperature_unit }}{% endif %}",
+                "target_temperature": "{% set value = state_attr(entity, 'target_temp_low' if config.get('temperature_target') == 'low' else 'target_temp_high' if config.get('temperature_target') == 'high' else 'temperature') %}{{ ('%g' | format(value | round(3))) ~ temperature_unit if value is number else '\u2014' }}",
+                "current_temperature": "{% set value = state_attr(entity, 'current_temperature') %}{% if config.get('show_temperature_control', false) %}Current {{ ('%g' | format(value)) ~ temperature_unit if value is number else '\u2014' ~ temperature_unit }}{% else %}{{ (value | round(0) | int | string) ~ temperature_unit if value is number else '--' }}{% endif %}",
+                "target_label": "{{ 'Heat to' if config.get('temperature_target') == 'low' else 'Cool to' if config.get('temperature_target') == 'high' else 'Set to' }}",
+                "hint": "Tap to adjust"
+              },
+              "grid_options": {
+                "columns": 12,
+                "rows": 2
+              }
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Media Player"
+            },
+            {
+              "type": "custom:echo-media-card",
+              "entity": "media_player.demo_11",
+              "grid_options": {
+                "columns": 12,
+                "rows": 3
+              },
+              "name": "Kitchen Player"
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Control / Fan Speed"
+            },
+            {
+              "type": "custom:echo-toggle-card",
+              "slider": true,
+              "entity": "fan.demo_3",
+              "grid_options": {
+                "columns": 12,
+                "rows": 3
+              },
+              "name": "Guest Bedroom Fan"
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Thermostat / Temperature Buttons"
+            },
+            {
+              "type": "custom:echo-climate-card",
+              "hvac_modes": [
+                "cool",
+                "heat"
+              ],
+              "entity": "climate.demo_1",
+              "icon": "mdi:thermometer",
+              "templates": {
+                "title": "Home Temperature",
+                "status": "{{ states(entity) | capitalize }}{% if not config.get('show_temperature_control', false) %} \u00b7 {% set value = state_attr(entity, 'temperature') %}{{ (value | round(0) | int | string) ~ temperature_unit if value is number else '--' ~ temperature_unit }}{% endif %}",
+                "target_temperature": "{% set value = state_attr(entity, 'target_temp_low' if config.get('temperature_target') == 'low' else 'target_temp_high' if config.get('temperature_target') == 'high' else 'temperature') %}{{ ('%g' | format(value | round(3))) ~ temperature_unit if value is number else '\u2014' }}",
+                "current_temperature": "{% set value = state_attr(entity, 'current_temperature') %}{% if config.get('show_temperature_control', false) %}Current {{ ('%g' | format(value)) ~ temperature_unit if value is number else '\u2014' ~ temperature_unit }}{% else %}{{ (value | round(0) | int | string) ~ temperature_unit if value is number else '--' }}{% endif %}",
+                "target_label": "{{ 'Heat to' if config.get('temperature_target') == 'low' else 'Cool to' if config.get('temperature_target') == 'high' else 'Set to' }}",
+                "hint": "Tap to adjust"
+              },
+              "grid_options": {
+                "columns": 12,
+                "rows": 2
+              },
+              "show_temperature_control": true,
+              "icon_tap_action": {
+                "action": "none"
+              }
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Entity"
+            },
+            {
+              "type": "custom:echo-entity-card",
+              "entity": "lock.demo_9",
+              "name": "Front Door",
+              "vertical": true,
+              "tap_action": {
+                "action": "more-info"
+              },
+              "grid_options": {
+                "columns": 12,
+                "rows": 2
+              }
+            }
+          ]
+        },
+        {
+          "type": "grid",
+          "cards": [
+            {
+              "type": "heading",
+              "heading": "Container \u2014 four independent cards"
+            },
+            {
+              "type": "custom:echo-container-card",
+              "title": "Entity controls",
+              "icon": "mdi:view-grid-outline",
+              "columns": 2,
+              "square": false,
+              "cards": [
+                {
+                  "type": "custom:echo-entity-card",
+                  "entity": "lock.demo_9",
+                  "name": "Front Door",
+                  "tap_action": {
+                    "action": "more-info"
+                  }
+                },
+                {
+                  "type": "custom:echo-entity-card",
+                  "entity": "lock.demo_8",
+                  "name": "Back Door",
+                  "tap_action": {
+                    "action": "more-info"
+                  }
+                },
+                {
+                  "type": "custom:echo-entity-card",
+                  "entity": "cover.demo_2",
+                  "name": "Garage",
+                  "icon": "mdi:garage",
+                  "tap_action": {
+                    "action": "more-info"
+                  }
+                },
+                {
+                  "type": "custom:echo-entity-card",
+                  "entity": "switch.demo_12",
+                  "name": "Main Lights",
+                  "tap_action": {
+                    "action": "toggle"
+                  }
+                }
+              ],
+              "grid_options": {
+                "columns": 12,
+                "rows": 6
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

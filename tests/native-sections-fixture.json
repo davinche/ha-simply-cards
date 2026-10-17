@@ -1,0 +1,229 @@
+{
+  "title": "Echo Native Sections Test",
+  "views": [
+    {
+      "title": "Kitchen (Native Sections Test)",
+      "path": "kitchen-native-sections-test",
+      "icon": "mdi:home-outline",
+      "background": "#F7F8FA",
+      "visible": [
+        {
+          "user": "synthetic-user"
+        },
+        {
+          "user": "synthetic-user"
+        }
+      ],
+      "type": "sections",
+      "max_columns": 2,
+      "top_margin": false,
+      "sections": [
+        {
+          "type": "grid",
+          "column_span": 2,
+          "cards": [
+            {
+              "type": "custom:echo-header-card",
+              "templates": {
+                "title": "Kitchen",
+                "time": "{{ now().strftime('%I:%M %p').lstrip('0') }}",
+                "date": "{{ now().strftime('%A, %B') }} {{ now().day }}",
+                "greeting": "{{ 'Good morning' if now().hour < 12 else 'Good afternoon' if now().hour < 17 else 'Good evening' }}"
+              },
+              "grid_options": {
+                "columns": 14,
+                "rows": 3
+              }
+            },
+            {
+              "type": "custom:echo-weather-card",
+              "entity": "weather.demo_13",
+              "templates": {
+                "label": "Outside",
+                "condition": "{{ 'Partly Cloudy' if states(entity) == 'partlycloudy' else states(entity) | replace('-', ' ') | title }}",
+                "temperature": "{% set value = state_attr(entity, 'temperature') %}{{ (value | round(0) | int | string) ~ (state_attr(entity, 'temperature_unit') or temperature_unit) if value is number else '--' }}",
+                "humidity": "{% set value = state_attr(entity, 'humidity') %}{{ 'Humidity ' ~ value ~ '%' if value is not none else '' }}",
+                "icon": "{{ {'clear-night': 'mdi:weather-night', 'sunny': 'mdi:weather-sunny', 'partlycloudy': 'mdi:weather-partly-cloudy', 'cloudy': 'mdi:weather-cloudy', 'rainy': 'mdi:weather-rainy', 'pouring': 'mdi:weather-pouring', 'snowy': 'mdi:weather-snowy', 'lightning': 'mdi:weather-lightning'}.get(states(entity), 'mdi:weather-partly-cloudy') }}"
+              },
+              "grid_options": {
+                "columns": 10,
+                "rows": 3
+              }
+            },
+            {
+              "type": "custom:echo-toggle-card",
+              "entity": "switch.demo_12",
+              "name": "Main Lights",
+              "icon": "mdi:ceiling-light-multiple",
+              "grid_options": {
+                "columns": 6,
+                "rows": 3
+              }
+            },
+            {
+              "type": "custom:echo-toggle-card",
+              "entity": "light.demo_7",
+              "name": "Cabinet Lights",
+              "icon": "mdi:led-strip-variant",
+              "grid_options": {
+                "columns": 6,
+                "rows": 3
+              }
+            },
+            {
+              "type": "custom:echo-climate-card",
+              "hvac_modes": [
+                "cool",
+                "heat"
+              ],
+              "entity": "climate.demo_1",
+              "icon": "mdi:thermometer",
+              "templates": {
+                "title": "Home Temperature",
+                "status": "{{ states(entity) | capitalize }}{% if not config.get('show_temperature_control', false) %} \u00b7 {% set value = state_attr(entity, 'temperature') %}{{ (value | round(0) | int | string) ~ temperature_unit if value is number else '--' ~ temperature_unit }}{% endif %}",
+                "target_temperature": "{% set value = state_attr(entity, 'target_temp_low' if config.get('temperature_target') == 'low' else 'target_temp_high' if config.get('temperature_target') == 'high' else 'temperature') %}{{ ('%g' | format(value | round(3))) ~ temperature_unit if value is number else '\u2014' }}",
+                "current_temperature": "{% set value = state_attr(entity, 'current_temperature') %}{% if config.get('show_temperature_control', false) %}Current {{ ('%g' | format(value)) ~ temperature_unit if value is number else '\u2014' ~ temperature_unit }}{% else %}{{ (value | round(0) | int | string) ~ temperature_unit if value is number else '--' }}{% endif %}",
+                "target_label": "{{ 'Heat to' if config.get('temperature_target') == 'low' else 'Cool to' if config.get('temperature_target') == 'high' else 'Set to' }}",
+                "hint": "Tap to adjust"
+              },
+              "grid_options": {
+                "columns": 12,
+                "rows": 3
+              }
+            },
+            {
+              "type": "custom:echo-media-card",
+              "entity": "media_player.demo_11",
+              "grid_options": {
+                "columns": 12,
+                "rows": 4
+              }
+            },
+            {
+              "type": "custom:echo-security-card",
+              "items": [
+                {
+                  "entity": "lock.demo_9",
+                  "name": "Front Door"
+                },
+                {
+                  "entity": "lock.demo_8",
+                  "name": "Back Door"
+                },
+                {
+                  "entity": "cover.demo_2",
+                  "name": "Garage",
+                  "icon": "mdi:garage"
+                }
+              ],
+              "grid_options": {
+                "columns": 12,
+                "rows": 4
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Guest Bedroom (Native Sections Test)",
+      "path": "guest-bedroom-native-sections-test",
+      "icon": "mdi:bed-outline",
+      "background": "#F7F8FA",
+      "visible": [
+        {
+          "user": "synthetic-user"
+        },
+        {
+          "user": "synthetic-user"
+        }
+      ],
+      "type": "sections",
+      "max_columns": 2,
+      "top_margin": false,
+      "sections": [
+        {
+          "type": "grid",
+          "column_span": 2,
+          "cards": [
+            {
+              "type": "custom:echo-header-card",
+              "templates": {
+                "title": "Guest Bedroom",
+                "time": "{{ now().strftime('%I:%M %p').lstrip('0') }}",
+                "date": "{{ now().strftime('%A, %B') }} {{ now().day }}",
+                "greeting": "{{ 'Good morning' if now().hour < 12 else 'Good afternoon' if now().hour < 17 else 'Good evening' }}"
+              },
+              "grid_options": {
+                "columns": 16,
+                "rows": 1
+              }
+            },
+            {
+              "type": "custom:echo-weather-card",
+              "entity": "weather.demo_13",
+              "templates": {
+                "label": "Outside",
+                "condition": "{{ 'Partly Cloudy' if states(entity) == 'partlycloudy' else states(entity) | replace('-', ' ') | title }}",
+                "temperature": "{% set value = state_attr(entity, 'temperature') %}{{ (value | round(0) | int | string) ~ (state_attr(entity, 'temperature_unit') or temperature_unit) if value is number else '--' }}",
+                "humidity": "{% set value = state_attr(entity, 'humidity') %}{{ 'Humidity ' ~ value ~ '%' if value is not none else '' }}",
+                "icon": "{{ {'clear-night': 'mdi:weather-night', 'sunny': 'mdi:weather-sunny', 'partlycloudy': 'mdi:weather-partly-cloudy', 'cloudy': 'mdi:weather-cloudy', 'rainy': 'mdi:weather-rainy', 'pouring': 'mdi:weather-pouring', 'snowy': 'mdi:weather-snowy', 'lightning': 'mdi:weather-lightning'}.get(states(entity), 'mdi:weather-partly-cloudy') }}"
+              },
+              "grid_options": {
+                "columns": 8,
+                "rows": 1
+              }
+            },
+            {
+              "type": "custom:echo-toggle-card",
+              "entity": "light.demo_5",
+              "name": "Bedside Lamp",
+              "icon": "mdi:lamp",
+              "grid_options": {
+                "columns": 8,
+                "rows": 2
+              }
+            },
+            {
+              "type": "custom:echo-toggle-card",
+              "entity": "light.demo_4",
+              "name": "Desk Lamp",
+              "icon": "mdi:desk-lamp",
+              "grid_options": {
+                "columns": 8,
+                "rows": 2
+              }
+            },
+            {
+              "type": "custom:echo-toggle-card",
+              "entity": "light.demo_6",
+              "name": "Ceiling Fan Light",
+              "icon": "mdi:ceiling-light",
+              "grid_options": {
+                "columns": 8,
+                "rows": 2
+              }
+            },
+            {
+              "type": "custom:echo-toggle-card",
+              "slider": true,
+              "entity": "fan.demo_3",
+              "grid_options": {
+                "columns": 8,
+                "rows": 2
+              }
+            },
+            {
+              "type": "custom:echo-media-card",
+              "entity": "media_player.demo_10",
+              "grid_options": {
+                "columns": 16,
+                "rows": 2
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
