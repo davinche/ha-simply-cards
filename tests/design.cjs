@@ -76,6 +76,31 @@ const refresh=true;
       assert.deepEqual(measurements,[]);
       await page.screenshot({path:path.join(root,`tests/design-${reference?'reference':refresh?'refresh':'luxury'}-${theme}-1280x800.png`)});
     }
+    // A 960x600 CSS viewport corresponds to a 1280x800 display at 133% scale.
+    for(const width of [1280,960])for(const theme of ['light','dark']){
+      await page.setViewportSize({width,height:width*5/8});
+      await page.goto(`http://preview/tests/design-preview.html?theme=${theme}`);
+      await page.waitForFunction(()=>window.ready);
+      await page.waitForTimeout(100);
+      const problems=await page.evaluate(()=>{
+        const problems=[];
+        for(const selector of ['echo-header-card','echo-weather-card','echo-toggle-card','echo-climate-card','echo-media-card']){
+          if(!document.querySelector(selector).hasAttribute('roomy'))problems.push(`${selector} lost design proportions`);
+        }
+        const header=document.querySelector('echo-header-card');
+        if(parseFloat(getComputedStyle(header.fields.room).fontSize)<45)problems.push('Room title too small');
+        const media=document.querySelector('echo-media-card');
+        const circles=[...media.shadowRoot.querySelectorAll('echo-media-action-card')].map(card=>card.shell.getBoundingClientRect());
+        const panel=media.shell.getBoundingClientRect();
+        circles.forEach((circle,index)=>{
+          if(index && circle.left<circles[index-1].right+3)problems.push('Media controls overlap or lack spacing');
+          if(circle.right>panel.right-10 || circle.bottom>panel.bottom-10)problems.push('Media controls exceed padding');
+        });
+        return problems;
+      });
+      assert.deepEqual(problems,[],`${width}px ${theme}`);
+      await page.screenshot({path:path.join(root,`tests/design-responsive-${theme}-${width}.png`)});
+    }
     // Verify rendered font faces, not merely CSS family declarations or load status.
     await page.evaluate(async()=>{
       const probes=document.createElement('div');probes.id='font-probes';probes.style.cssText='position:fixed;left:-2000px';

@@ -1,5 +1,5 @@
 import { themeStyle, paletteColor } from './echo-theme.js';
-import { designStyle } from './echo-design.js';
+import { designStyle, sizeDesign } from './echo-design.js';
 import { gestures, actionNames, bindCardGestures, cancelCardGestures, runCardAction, syncActionAccessibility } from './echo-actions.js';
 import { cardStyles } from './echo-styles.js';
 import { entityAppearanceDefaults, normalizeEntityAppearance } from './echo-entity-templates.js';
@@ -64,7 +64,7 @@ class EchoStyledCard extends HTMLElement {
 class EchoEntityCard extends EchoStyledCard {
   connectedCallback() {
     super.connectedCallback();
-    this.resizeObserver = new ResizeObserver(entries => this.toggleAttribute('roomy', entries[0].contentRect.height >= 180));
+    this.resizeObserver = new ResizeObserver(entries => sizeDesign(this, entries[0].contentRect.height));
     this.resizeObserver.observe(this);
   }
   disconnectedCallback() { super.disconnectedCallback(); this.resizeObserver?.disconnect(); this.resizeObserver = null; }

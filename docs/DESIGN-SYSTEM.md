@@ -47,9 +47,12 @@ fall back to Segoe UI / Arial or Georgia. Override `--echo-font-interface` and
 `--echo-font-display` on an ancestor to use a household theme's fonts.
 Reserve the serif for the room title and weather condition only. All other text,
 including greeting, Music, Security, labels, descriptions, time, date, and numeric
-readings, uses Inter. Shared production styles live in `frontend/echo-design.js`;
-larger allocations get the expanded type/icon scale while compact allocations
-retain readable, space-efficient sizing.
+readings, uses Inter. Shared production styles live in `frontend/echo-design.js`.
+The expanded type/icon proportions scale with each card's allocated CSS height,
+down to 65% of its reference size, before switching to the compact layout.
+Validate the demo at both 1280×800 and 960×600 CSS pixels (the latter models
+133% effective display scale). Media artwork must reserve room for the actual
+four transport buttons and their gaps; controls must never overlap.
 
 ## Shape, hierarchy, and interaction
 

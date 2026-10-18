@@ -1,4 +1,13 @@
 // Public visual system. Text and entity configuration come exclusively from card config/hass.
+// Scale the approved proportions in CSS pixels, including zoomed touch displays.
+export function sizeDesign(card, height) {
+  const reference = { header: 212, weather: 212, toggle: 192, climate: 192, media: 304, entity: 222, 'security-tile': 222 }[card.kind];
+  const scale = reference ? Math.min(1, height / reference) : 1;
+  card.toggleAttribute('roomy', scale >= .65);
+  card.style.setProperty('--echo-design-scale', String(scale >= .65 ? scale : 1));
+  return scale >= .65 ? scale : 1;
+}
+
 export const designStyle = `
 :host{--echo-design-text:#1D302E;--echo-design-secondary:#7A807D;--echo-design-surface:#FFFDF9;--echo-design-end:#FCFAF5;--echo-design-recess:#F5F3EC;--echo-design-border:#EDEAE1;--echo-design-accent:#A17B47;--echo-design-icon:#AD8754;--echo-design-icon-bg:#F3EDE2;--echo-design-header:#F5EBDD}
 :host([echo-dark]){--echo-design-text:#F3F1EC;--echo-design-secondary:#B9B6AF;--echo-design-surface:#242625;--echo-design-end:#292927;--echo-design-recess:#282C29;--echo-design-border:#414540;--echo-design-accent:#E5BA78;--echo-design-icon:#E5BA78;--echo-design-icon-bg:#38352F;--echo-design-header:#302C26}
@@ -65,4 +74,6 @@ export const designStyle = `
 :host([kind="entity"][roomy]:not([horizontal])) ha-icon,:host([kind="security-tile"][roomy]) ha-icon{width:34px}
 :host([kind="entity"][roomy]:not([horizontal])) .name,:host([kind="security-tile"][roomy]) .name{font-size:18px;line-height:26px;font-weight:400;margin-top:12px;color:var(--echo-design-text)}
 :host([kind="entity"][roomy]:not([horizontal])) .label,:host([kind="security-tile"][roomy]) .label{font-size:17px;line-height:24px;margin-top:6px;color:var(--echo-design-secondary)}
-`;
+`.replace(/(-?\d*\.?\d+)px/g, 'calc($1px * var(--echo-design-scale,1))')
+  // JS resolves the transport size separately when calculating available width.
+  .replace(/--echo-media-control-size:calc\((\d+)px \* var\(--echo-design-scale,1\)\)/g, '--echo-media-control-size:$1px');

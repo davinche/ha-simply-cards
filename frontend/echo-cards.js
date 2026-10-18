@@ -1,5 +1,5 @@
 import { themeStyle } from './echo-theme.js';
-import { designStyle } from './echo-design.js';
+import { designStyle, sizeDesign } from './echo-design.js';
 import { weatherAppearance, weatherImageStyle } from './echo-weather.js';
 import { startTemplates, stopTemplates, templateValue } from './echo-templates.js';
 import { cardStyles } from './echo-styles.js';
@@ -273,7 +273,7 @@ class EchoCard extends HTMLElement {
     if (!this.isConnected || !this.config || (!gridDefaults[this.kind] && this.kind !== 'security-tile') || this.resizeObserver) return;
     this.resizeObserver = new ResizeObserver(entries => {
       const { width, height } = entries[0].contentRect;
-      this.toggleAttribute('roomy', height >= 180);
+      const designScale = sizeDesign(this, height);
       this.setAttribute('width', width < 440 ? 'narrow' : 'wide');
       const threshold = { header: 100, weather: 90, fan: 170, media: 160, security: 235 }[this.kind] || 0;
       this.setAttribute('height', height < threshold ? 'short' : 'tall');
@@ -283,9 +283,11 @@ class EchoCard extends HTMLElement {
         const availableWidth = width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
         const availableHeight = height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
         const gap = parseFloat(tokens.getPropertyValue('--echo-media-gap'));
-        const action = parseFloat(tokens.getPropertyValue('--echo-media-control-size'));
+        const desiredAction = parseFloat(tokens.getPropertyValue('--echo-media-control-size')) * designScale;
+        // Reserve 48px of artwork where possible; fit all four controls even in portrait.
+        const action = Math.min(desiredAction, Math.max(40, (availableWidth - 48 - 4 * gap) / 4), (availableWidth - 3 * gap) / 4);
         const limit = parseFloat(tokens.getPropertyValue('--echo-media-art-limit'));
-        const minText = parseFloat(tokens.getPropertyValue('--echo-media-min-text-width'));
+        const minText = Math.max(parseFloat(tokens.getPropertyValue('--echo-media-min-text-width')), 4 * action + 3 * gap);
         const stacked = height > width || availableWidth < minText + gap + 48;
         this.setAttribute('media-layout', stacked ? 'stacked' : 'landscape');
         const infoHeight = this.info.scrollHeight;
