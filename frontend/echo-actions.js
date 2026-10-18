@@ -24,7 +24,11 @@ export function bindGestures(element, { configured, run }) {
     event.stopPropagation(); clearHold(); start = null;
     if (held && !moved) run('hold');
   });
-  for (const name of ['pointercancel', 'pointerleave']) element.addEventListener(name, () => { clearHold(); start = null; moved = true; });
+  for (const name of ['pointercancel', 'pointerleave']) element.addEventListener(name, () => {
+    // Touch release can emit pointerleave before click; only cancel a press still in progress.
+    if (!start) return;
+    clearHold(); start = null; moved = true;
+  });
   element.addEventListener('contextmenu', event => { if (configured('hold')) event.preventDefault(); });
   element.addEventListener('click', event => {
     event.stopPropagation();

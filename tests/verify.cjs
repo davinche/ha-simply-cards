@@ -54,6 +54,18 @@ async function run() {
     assert.equal(await page.evaluate(() => infos.pop()),'switch.demo_12');
     assert.equal(await page.evaluate(() => calls.length),0);
     results.push('Light toggle, keyboard activation, and hold without accidental toggle');
+    // Touch pointers leave the hit-test area after release, before some WebViews deliver click.
+    for (const type of ['pointerdown', 'pointerup', 'pointerleave', 'click']) {
+      await main.dispatchEvent(type, {pointerType:'touch',button:0,clientX:30,clientY:30});
+    }
+    assert.equal(await page.evaluate(() => calls.pop()?.service),'toggle');
+    for (const end of ['pointerleave', 'pointercancel']) {
+      for (const type of ['pointerdown', end, 'pointerup', 'click']) {
+        await main.dispatchEvent(type, {pointerType:'touch',button:0,clientX:30,clientY:30});
+      }
+      assert.equal(await page.evaluate(() => calls.length),0);
+    }
+    results.push('Touch release followed by pointerleave activates once; leaving or cancelling an active gesture suppresses activation');
     await page.evaluate(() => patchState('switch.demo_12','unavailable'));
     await main.dispatchEvent('click');
     assert.equal(await page.evaluate(() => calls.length),0);
