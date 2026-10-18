@@ -1,87 +1,557 @@
+# Public reference: replace all .example entities before using service actions.
 title: Simply Cards Reference
 views:
-  - title: Card Reference
-    path: reference
+  - title: Headers and Weather
+    path: headers-weather
+    icon: mdi:weather-partly-cloudy
     type: sections
     max_columns: 2
+    background: "light-dark(#F5F3EE, #171A19)"
+    sections:
+      - type: grid
+        cards:
+          - type: markdown
+            content: "Reference catalog: card states come from the configured entities.
+              Labels do not force an on/off state. Switch light/dark mode in
+              your Home Assistant profile. This reference intentionally scrolls;
+              it is not a single-screen Echo layout."
+          - type: heading
+            heading: Header • automatic / roomy
+          - type: custom:echo-header-card
+            templates:
+              title: Demo Room
+              greeting: Welcome home
+            grid_options:
+              columns: 12
+              rows: 4
+          - type: heading
+            heading: Header • stacked / compact allocation
+          - type: custom:echo-header-card
+            header_layout: stacked
+            templates:
+              title: Demo Room
+              greeting: Good afternoon
+            grid_options:
+              columns: 12
+              rows: 2
+          - type: heading
+            heading: Header • compact / static text
+          - type: custom:echo-header-card
+            header_layout: compact
+            templates:
+              title: Demo Room
+              greeting: Welcome
+              time: 10:30 AM
+              date: Monday, January 1
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: heading
+            heading: Header • Jinja / hidden date
+          - type: custom:echo-header-card
+            templates:
+              title: Demo Room
+              greeting: "{{ 'Good morning' if now().hour < 12 else 'Welcome home' }}"
+              date: ""
+            grid_options:
+              columns: 12
+              rows: 3
+      - type: grid
+        cards:
+          - type: heading
+            heading: Weather • gradient / stacked
+          - type: custom:echo-weather-card
+            entity: weather.example
+            weather_images: false
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: heading
+            heading: Weather • ATELIER / stacked
+          - type: custom:echo-weather-card
+            entity: weather.example
+            weather_images: true
+            grid_options:
+              columns: 12
+              rows: 4
+          - type: heading
+            heading: Weather • ATELIER / inline
+          - type: custom:echo-weather-card
+            entity: weather.example
+            weather_images: true
+            weather_layout: inline
+            grid_options:
+              columns: 12
+              rows: 2
+          - type: heading
+            heading: Weather • custom label / hidden humidity
+          - type: custom:echo-weather-card
+            entity: weather.example
+            weather_images: true
+            templates:
+              label: Local Conditions
+              humidity: ""
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: markdown
+            content: All weather examples use the same live entity. Images follow its state;
+              changing condition text does not select another image.
+              Unknown/unavailable fallbacks and all 15 conditions are supported.
+  - title: Controls
+    path: controls
+    icon: mdi:lightbulb-outline
+    type: sections
+    max_columns: 2
+    background: "light-dark(#F5F3EE, #171A19)"
     sections:
       - type: grid
         cards:
           - type: heading
-            heading: Header and Weather
-          - type: custom:echo-header-card
-            templates:
-              title: Card Reference
+            heading: Control • switch / default toggle
+          - type: custom:echo-toggle-card
+            entity: switch.example
+            name: Main Light
+            icon: mdi:ceiling-light-outline
             grid_options:
               columns: 12
-              rows: 2
-          - type: custom:echo-weather-card
-            entity: weather.example
-            grid_options:
-              columns: 12
-              rows: 2
-      - type: grid
-        cards:
+              rows: 3
           - type: heading
-            heading: Control and Sliders
+            heading: Control • dimmable light / brightness
           - type: custom:echo-toggle-card
             entity: light.example
-            name: Reading Light
-            grid_options:
-              columns: 6
-              rows: 2
-          - type: custom:echo-toggle-card
-            entity: fan.example
-            name: Ceiling Fan
+            name: Brightness Control
+            icon: mdi:led-strip-variant
             slider: true
             grid_options:
-              columns: 6
+              columns: 12
               rows: 3
+          - type: heading
+            heading: Control • same light / slider disabled
+          - type: custom:echo-toggle-card
+            entity: light.example
+            name: Toggle Only
+            icon: mdi:led-strip-variant
+            slider: false
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: markdown
+            content: Light sliders require brightness support. On/off examples show the
+              actual entity state. Slider interactions adjust brightness without
+              triggering the card tap action.
       - type: grid
         cards:
           - type: heading
-            heading: Thermostat and Media
+            heading: Control • fan / speed slider
+          - type: custom:echo-toggle-card
+            entity: fan.example
+            name: Fan Speed
+            slider: true
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: heading
+            heading: Control • fan / power only
+          - type: custom:echo-toggle-card
+            entity: fan.example
+            name: Fan Power
+            slider: false
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: heading
+            heading: Compatibility • original Fan alias
+          - type: custom:echo-fan-card
+            entity: fan.example
+            name: Original Fan Card
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: markdown
+            content: The original echo-fan-card remains supported. New configurations can
+              use echo-toggle-card with a fan entity. Fan sliders require
+              percentage support.
+  - title: Climate and Media
+    path: climate-media
+    icon: mdi:thermometer
+    type: sections
+    max_columns: 2
+    background: "light-dark(#F5F3EE, #171A19)"
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Climate • reading / default details action
+          - type: custom:echo-climate-card
+            entity: climate.example
+            templates:
+              title: Home Temperature
+              hint: Tap for thermostat details
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: heading
+            heading: Climate • temperature adjustment buttons
           - type: custom:echo-climate-card
             entity: climate.example
             show_temperature_control: true
-            hvac_modes: [cool, heat]
-            icon_tap_action:
+            icon_tap_action: &a3
               action: none
-            grid_options:
-              columns: 12
-              rows: 2
-          - type: custom:echo-media-card
-            entity: media_player.example
+            templates:
+              title: Adjust Temperature
             grid_options:
               columns: 12
               rows: 3
+          - type: heading
+            heading: Climate • icon cycles supported HVAC modes
+          - type: custom:echo-climate-card
+            entity: climate.example
+            show_temperature_control: true
+            hvac_modes:
+              - cool
+              - heat
+            icon_tap_action:
+              action: cycle-hvac-mode
+            templates:
+              title: Cool / Heat
+              hint: Tap icon to cycle cool and heat
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: markdown
+            content: "HVAC cycling requires the selected entity to support both modes. Range
+              thermostats also support temperature_target: low or high with
+              adjustment buttons; only use those options when target_temp_low /
+              target_temp_high exist. No range-capable entity is assumed here."
       - type: grid
         cards:
           - type: heading
-            heading: Entity and Container
+            heading: Media • landscape allocation
+          - type: custom:echo-media-card
+            entity: media_player.example
+            name: Media Player
+            grid_options:
+              columns: 12
+              rows: 4
+          - type: heading
+            heading: Media • tall/narrow allocation
+          - type: custom:echo-media-card
+            entity: media_player.example
+            name: Portrait Player
+            grid_options:
+              columns: 6
+              rows: 6
+          - type: heading
+            heading: Media • short allocation
+          - type: custom:echo-media-card
+            entity: media_player.example
+            name: Compact Player
+            grid_options:
+              columns: 12
+              rows: 2
+          - type: markdown
+            content: The same player is shown in three allocations. Artwork comes from
+              entity_picture; otherwise the gradient placeholder appears.
+              Metadata and playback icons follow actual player state. Portrait
+              layout depends on the actual allocated dimensions.
+  - title: Entities and Groups
+    path: entities-groups
+    icon: mdi:view-dashboard-outline
+    type: sections
+    max_columns: 2
+    background: "light-dark(#F5F3EE, #171A19)"
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Entity • vertical / default state colors
           - type: custom:echo-entity-card
             entity: lock.example
-            name: Entry Door
-            tap_action:
+            name: Entry Lock
+            tap_action: &a1
               action: more-info
             grid_options:
               columns: 6
-              rows: 2
+              rows: 3
+          - type: custom:echo-entity-card
+            entity: cover.example
+            name: Garage
+            icon: mdi:garage
+            tap_action: *a1
+            grid_options:
+              columns: 6
+              rows: 3
+          - type: heading
+            heading: Entity • horizontal / state plus attribute
+          - type: custom:echo-entity-card
+            entity: weather.example
+            name: Outdoor Conditions
+            layout: horizontal
+            icon: mdi:weather-partly-cloudy
+            state_content:
+              - state
+              - temperature
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: heading
+            heading: Entity • explicit colors / hidden state
+          - type: custom:echo-entity-card
+            entity: light.example
+            name: Fixed Gold
+            layout: horizontal
+            icon: mdi:lightbulb-outline
+            color: "#B5811F"
+            background_color: "#FFF0CE"
+            hide_state: true
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: heading
+            heading: Entity • picture when provided by entity
+          - type: custom:echo-entity-card
+            entity: media_player.example
+            name: Player Artwork
+            layout: horizontal
+            show_entity_picture: true
+            hide_state: true
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: heading
+            heading: Entity • templated icon and appearance
+          - type: custom:echo-entity-card
+            entity: light.example
+            name: Template Appearance
+            layout: horizontal
+            icon: "{{ 'mdi:lightbulb-outline' }}"
+            color: "{{ '#B5811F' if is_state(entity, 'on') else '#72736C' }}"
+            background_color: "{{ '#FFF0CE' if is_state(entity, 'on') else '#E9E2D7' }}"
+            tap_action: &a2
+              action: toggle
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: markdown
+            content: Entity cards have no implicit tap action. Literal custom colors remain
+              unchanged across themes. Default colors follow state/theme. Entity
+              pictures require entity_picture; otherwise the icon remains.
+      - type: grid
+        cards:
+          - type: heading
+            heading: Container • three vertical entities
           - type: custom:echo-container-card
-            title: Entity Controls
-            columns: 2
-            square: false
+            title: Home Status
+            icon: mdi:shield-home-outline
+            columns: 3
             cards:
               - type: custom:echo-entity-card
-                entity: light.example
-                name: Reading Light
-                tap_action:
-                  action: toggle
+                entity: lock.example
+                name: Entry A
+              - type: custom:echo-entity-card
+                entity: lock.example_secondary
+                name: Entry B
               - type: custom:echo-entity-card
                 entity: cover.example
-                name: Shade
-                tap_action:
-                  action: more-info
+                name: Garage
+                icon: mdi:garage
+            grid_options:
+              columns: 12
+              rows: 4
+          - type: heading
+            heading: Container • two columns / four entities
+          - type: custom:echo-container-card
+            title: Independent Controls
+            columns: 2
+            cards:
+              - type: custom:echo-entity-card
+                entity: lock.example
+                name: Entry A
+                tap_action: *a1
+              - type: custom:echo-entity-card
+                entity: lock.example_secondary
+                name: Entry B
+                tap_action: *a1
+              - type: custom:echo-entity-card
+                entity: cover.example
+                name: Garage
+                icon: mdi:garage
+                tap_action: *a1
+              - type: custom:echo-entity-card
+                entity: switch.example
+                name: Main Light
+                tap_action: *a2
+            grid_options:
+              columns: 12
+              rows: 6
+          - type: heading
+            heading: Container • stacked horizontal status rows
+          - type: custom:echo-container-card
+            title: Status List
+            columns: 1
+            cards:
+              - type: custom:echo-entity-card
+                entity: lock.example
+                name: Entry Lock
+                layout: horizontal
+              - type: custom:echo-entity-card
+                entity: weather.example
+                name: Weather
+                layout: horizontal
+                icon: mdi:weather-partly-cloudy
+            grid_options:
+              columns: 12
+              rows: 4
+          - type: heading
+            heading: Container • square tiles / no heading
+          - type: custom:echo-container-card
+            columns: 2
+            square: true
+            cards:
+              - type: custom:echo-entity-card
+                entity: switch.example
+                name: Main Light
+              - type: custom:echo-entity-card
+                entity: cover.example
+                name: Garage
+                icon: mdi:garage
+            grid_options:
+              columns: 12
+              rows: 5
+          - type: heading
+            heading: Compatibility • original Security group
+          - type: custom:echo-security-card
+            name: Security
+            items:
+              - entity: lock.example
+                name: Entry A
+              - entity: lock.example_secondary
+                name: Entry B
+              - entity: cover.example
+                name: Garage
+                icon: mdi:garage
+            grid_options:
+              columns: 12
+              rows: 4
+  - title: Images and Actions
+    path: images-actions
+    icon: mdi:gesture-tap
+    type: sections
+    max_columns: 2
+    background: "light-dark(#F5F3EE, #171A19)"
+    sections:
+      - type: grid
+        cards:
+          - type: markdown
+            content: "Image Buttons reuse the bundled cloudy-weather photograph through
+              image: weather:cloudy. No image upload is needed. Requires beta.9
+              or newer. Scene-style examples are intentionally
+              inactive; no scene entity is needed."
+          - type: heading
+            heading: Image Button • scene style / selected
+          - type: custom:echo-image-button-card
+            image: weather:cloudy
+            heading: Relax
+            subheading: Warm lights, quiet mood
+            icon: mdi:sofa-outline
+            selected: true
+            tap_action: *a3
             grid_options:
               columns: 12
               rows: 3
+          - type: heading
+            heading: Image Button • room navigation
+          - type: custom:echo-image-button-card
+            image: weather:cloudy
+            heading: Demo Room
+            subheading: Open the Controls catalog
+            icon: mdi:lightbulb-outline
+            tap_action:
+              action: navigate
+              navigation_path: ./controls
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: heading
+            heading: Image Button • no photograph fallback
+          - type: custom:echo-image-button-card
+            heading: Good Night
+            subheading: Dark fallback surface; no action
+            icon: mdi:weather-night
+            tap_action: *a3
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: markdown
+            content: To activate a real scene later, set tap_action to perform-action,
+              perform_action to scene.turn_on, and target.entity_id to your
+              scene. The selected ring is a configured boolean; it does not
+              automatically track scene activity.
+      - type: grid
+        cards:
+          - type: heading
+            heading: Control • six independent card/icon gestures
+          - type: custom:echo-toggle-card
+            entity: light.example
+            name: Gesture Reference
+            icon: mdi:lightbulb-outline
+            tap_action: *a2
+            hold_action: *a1
+            double_tap_action: *a3
+            icon_tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              data:
+                brightness_pct: 50
+            icon_hold_action:
+              action: navigate
+              navigation_path: ./entities-groups
+            icon_double_tap_action:
+              action: url
+              url_path: https://www.home-assistant.io/
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: heading
+            heading: Entity • confirmed service action
+          - type: custom:echo-entity-card
+            entity: light.example
+            name: Confirm Before Switching Off
+            layout: horizontal
+            tap_action:
+              action: perform-action
+              perform_action: light.turn_off
+              confirmation:
+                text: Switch off this light?
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: heading
+            heading: Image Button • entity action and separate icon
+          - type: custom:echo-image-button-card
+            image: weather:cloudy
+            heading: Light Control
+            subheading: Tap toggles; icon opens details
+            icon: mdi:lightbulb-outline
+            entity: light.example
+            tap_action: *a2
+            hold_action: *a1
+            double_tap_action:
+              action: navigate
+              navigation_path: ./controls
+            icon_tap_action: *a1
+            icon_hold_action: *a3
+            icon_double_tap_action:
+              action: url
+              url_path: https://www.home-assistant.io/
+            grid_options:
+              columns: 12
+              rows: 3
+          - type: markdown
+            content: Six-gesture configuration applies to Control, Entity, and Image Button.
+              Header/Weather/Media retain built-in interactions; Climate has a
+              separate icon action. Internal artwork, transport, power, and
+              security-tile elements are implementation details, not standalone
+              public cards. Reference actions control the mapped entities when
+              used in Home Assistant.

@@ -27,6 +27,24 @@ const root = path.resolve(__dirname, '..');
       await page.screenshot({path:path.join(root,`tests/luxury-${theme}-960x480.png`)});
       assert.deepEqual(await page.evaluate(() => ({width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight})),{width:960,height:480});
     }
+    await page.evaluate(async()=>{
+      const card=document.querySelector('echo-image-button-card');
+      const {weatherImages}=await import('../frontend/echo-weather-images.js');
+      for(const darkMode of [false,true]){
+        card.hass={...card.hass,themes:{darkMode}};
+        for(const condition of Object.keys(weatherImages)){
+          card.setConfig({heading:'Bundled image',image:`weather:${condition}`});
+          await card.photo.decode();
+          if(card.photo.hidden || !card.photo.src.startsWith('data:image/webp;base64,') || !card.photo.naturalWidth)throw new Error('Bundled image did not render');
+        }
+      }
+      for(const image of ['weather:invalid','weather:__proto__','weather:constructor','data:image/svg+xml,<svg/>']){
+        card.setConfig({heading:'Fallback',image});
+        if(!card.photo.hidden || card.photo.hasAttribute('src'))throw new Error('Invalid or arbitrary data image accepted');
+      }
+      card.setConfig({heading:'URL image',image:'./room-illustration.svg'});await card.photo.decode();
+      if(!card.photo.src.endsWith('/tests/room-illustration.svg'))throw new Error('URL image regression');
+    });
     await page.evaluate(() => {
       const image = document.querySelector('echo-image-button-card');
       window.imageTest = image;

@@ -109,7 +109,11 @@ The approved variant places smaller minus/plus buttons beside the target readout
 
 Entity supports name/icon overrides, independent icon color (`color`) and icon-circle background (`background_color`), state content, entity pictures, state hiding, horizontal orientation and independent card/icon tap, hold and double-tap actions. Both colors default to state-based colors; choose them in the visual editor or supply CSS colors such as `#FFE4B5` or Home Assistant color names. Custom overrides stay fixed across states, including unavailable; clearing an override or selecting `state` restores the automatic colors. All gestures default to none. Actions include more-info, toggle, perform-action, navigate and URL. Container accepts arbitrary child cards through its visual editor. It is not limited to three children or any entity domain.
 
-Use `examples/reference-dashboard.yaml` as a generic reference; replace placeholder entities before testing. Production dashboards, user IDs and credentials are not included. Browser fixtures use synthetic entity/user IDs only.
+Use `examples/reference-dashboard.yaml` as a five-view component cookbook;
+see [reference dashboard instructions](docs/REFERENCE-DASHBOARD.md) for setup,
+bundled Image Button backgrounds, and supported variants. Replace placeholder
+entities before testing. Production dashboards, user IDs and credentials are
+not included. Browser fixtures use synthetic entity/user IDs only.
 
 ## Updates and development
 

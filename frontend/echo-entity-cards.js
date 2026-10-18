@@ -1,5 +1,6 @@
 import { themeStyle, paletteColor } from './echo-theme.js';
 import { designStyle, sizeDesign } from './echo-design.js';
+import { weatherImages } from './echo-weather-images.js';
 import { gestures, actionNames, bindCardGestures, cancelCardGestures, runCardAction, syncActionAccessibility } from './echo-actions.js';
 import { cardStyles } from './echo-styles.js';
 import { entityAppearanceDefaults, normalizeEntityAppearance } from './echo-entity-templates.js';
@@ -180,7 +181,10 @@ ha-card{height:100%;overflow:hidden;border:0;border-radius:16px;background:#2F35
     this.cleanups = [];
     bindCardGestures(this, this.shell); bindCardGestures(this, this.iconCell, 'icon_');
     let url;
-    try { const candidate = new URL(this.config.image, location.href); if (this.config.image && ['http:', 'https:'].includes(candidate.protocol)) url = candidate.href; } catch {}
+    const bundled = typeof this.config.image === 'string' && this.config.image.startsWith('weather:')
+      ? weatherImages[this.config.image.slice(8)] : undefined;
+    if (typeof bundled === 'string' && bundled.startsWith('data:image/')) url = bundled;
+    else try { const candidate = new URL(this.config.image, location.href); if (this.config.image && ['http:', 'https:'].includes(candidate.protocol)) url = candidate.href; } catch {}
     this.photo.hidden = !url;
     if (url) this.photo.src = url;
   }

@@ -64,6 +64,10 @@ four transport buttons and their gaps; controls must never overlap.
   Native grid sizing remains supported.
 - Image Buttons use 16px corners, edge-to-edge photos, a dark scrim, white labels,
   a small icon at the upper left, and a champagne inset ring when selected.
+  `image` accepts an HTTP(S)/local URL or `weather:<condition>` to reuse a bundled
+  weather image, for example `weather:cloudy` (available from beta.9).
+  Unknown keys show the dark fallback surface; arbitrary data URLs
+  remain unsupported.
 - Scene headings use Inter 500 at 17px/22px; descriptions use Inter 400 at
   13px/18px. Use a 26px icon in a 44px tap target, 12px vertical padding,
   and 4px text-row gaps. The content needs at least 116px height; prefer 132px.
