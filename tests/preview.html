@@ -26,7 +26,7 @@
   const {entityAppearanceDefaults}=await import('../frontend/echo-entity-templates.js');
   const params = new URLSearchParams(location.search);
   const mode = params.get('mode') || 'legacy';
-  const fixture = await fetch(mode === 'legacy' ? './dashboard-fixture.json' : `./${mode}-fixture.json`).then(response => response.json());
+  const fixture = await fetch(mode === 'legacy' ? './dashboard-fixture.json' : `./${mode === 'comparison' ? 'reference' : mode}-fixture.json`).then(response => response.json());
   const index = Number(params.get('view') || 0);
   const view = fixture.views[index];
   const layout = view.cards?.[0];
@@ -135,7 +135,32 @@
     for (const child of config.cards || []) element.append(render(child));
     return element;
   }
-  if (mode === 'legacy' || mode === 'legacy-reference') {
+  if (mode === 'comparison') {
+    dashboard.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;width:1120px;padding:24px;gap:0;background:#131A23';
+    const configs = view.sections.flatMap(section => section.cards).filter(card => card.type.startsWith('custom:echo-'));
+    configs.push(
+      {type:'custom:echo-fan-card',entity:'fan.demo',name:'Ceiling fan',grid_options:{rows:3}},
+      {type:'custom:echo-security-card',name:'Security',items:[{entity:'lock.demo_9',name:'Front Door'},{entity:'lock.demo_8',name:'Back Door'},{entity:'cover.demo_2',name:'Garage'}],grid_options:{rows:4}}
+    );
+    configs.forEach(collect);
+    for (const config of configs) {
+      for (const dark of [false,true]) {
+        const panel = document.createElement('section');
+        panel.dataset.dark = String(dark);
+        panel.style.cssText = `padding:18px;background:${dark ? '#131A23' : '#F7F8FA'};color:${dark ? '#E7EDF5' : '#202732'}`;
+        const label = document.createElement('div');
+        label.textContent = `${config.type.replace('custom:echo-','').replace('-card','')} · ${dark ? 'DARK' : 'LIGHT'}`;
+        label.style.cssText = 'margin-bottom:12px;font-size:13px;font-weight:bold;letter-spacing:1px';
+        const wrapper = document.createElement('div');
+        wrapper.style.height = `${(config.grid_options?.rows || 2)*64-8}px`;
+        const card = render(config);
+        card.layout = 'grid';
+        wrapper.append(card);
+        panel.append(label,wrapper);
+        dashboard.append(panel);
+      }
+    }
+  } else if (mode === 'legacy' || mode === 'legacy-reference') {
     for (const config of layout.cards) {
       const card = render(config);
       card.style.gridArea = config.view_layout['grid-area'];
@@ -194,6 +219,10 @@
     dashboard.append(render(layout));
   }
   window.refresh();
+  if (mode === 'comparison') {
+    await Promise.all(window.topCards.map(card => card.ready));
+    for (const card of window.topCards) card.hass = {...window.mockHass,themes:{darkMode:card.closest('section').dataset.dark === 'true'}};
+  }
   window.ready = true;
 </script>
 </html>

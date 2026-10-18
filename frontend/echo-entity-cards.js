@@ -1,3 +1,4 @@
+import { themeStyle, paletteColor } from './echo-theme.js';
 import { gestures, actionNames, bindCardGestures, cancelCardGestures, runCardAction } from './echo-actions.js';
 import { cardStyles } from './echo-styles.js';
 import { entityAppearanceDefaults, normalizeEntityAppearance } from './echo-entity-templates.js';
@@ -9,14 +10,14 @@ const resolveColor = (value, fallback) => value === 'state' ? fallback : CSS.sup
 const sharedStyle = `
 :host{display:block;height:100%;min-height:0;min-width:0;font-family:var(--paper-font-body1_-_font-family,Roboto,Arial,sans-serif)}
 *{box-sizing:border-box}[hidden]{display:none!important}
-ha-card{display:block;position:relative;font:inherit;color:#202732}
+ha-card{display:block;position:relative;font:inherit;color:var(--echo-color-202732,#202732)}
 .grid{display:grid;width:100%;height:100%;align-items:center;text-align:center;min-width:0;min-height:0}
 .img-cell{grid-area:i;display:flex;align-items:center;justify-content:center;overflow:hidden}
 ha-icon{display:block;height:auto;aspect-ratio:1;--mdc-icon-size:100%}
 .name{grid-area:n;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .label{grid-area:l;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 [role=button]{cursor:pointer;touch-action:manipulation;outline:none}
-[role=button]:focus-visible{outline:3px solid #3478F6;outline-offset:-3px}
+[role=button]:focus-visible{outline:3px solid var(--echo-color-3478f6,#3478F6);outline-offset:-3px}
 `;
 
 class EchoStyledCard extends HTMLElement {
@@ -40,14 +41,14 @@ class EchoStyledCard extends HTMLElement {
   }
   shellWith(styles) {
     const style = document.createElement('style');
-    style.textContent = sharedStyle + styles + `:host{contain:size;contain-intrinsic-size:0px ${this.getCardSize() * 50}px;contain-intrinsic-block-size:${this.getCardSize() * 50}px}`;
+    style.textContent = themeStyle + sharedStyle + styles + `:host{contain:size;contain-intrinsic-size:0px ${this.getCardSize() * 50}px;contain-intrinsic-block-size:${this.getCardSize() * 50}px}`;
     this.shell = document.createElement('ha-card');
     this.grid = document.createElement('div');
     this.grid.className = 'grid';
     this.shell.append(this.grid);
     this.shadowRoot.replaceChildren(style, this.shell);
   }
-  set hass(value) { this._hass = value; this.startTemplates?.(); this.update(); for (const card of this.childrenCards) card.hass = value; }
+  set hass(value) { this._hass = value; this.toggleAttribute('echo-dark', !!value?.themes?.darkMode); this.startTemplates?.(); this.update(); for (const card of this.childrenCards) card.hass = value; }
   get hass() { return this._hass; }
   set layout(value) { this._layout = value; }
   get layout() { return this._layout; }
@@ -92,8 +93,8 @@ class EchoEntityCard extends EchoStyledCard {
     const entity = this._hass?.states[this.config.entity];
     const attributes = entity?.attributes || {};
     const state = entity?.state || 'unavailable';
-    const color = resolveColor(this.appearanceValue('color'), '#8B93A0');
-    const background = resolveColor(this.appearanceValue('background_color'), '#F0F2F5');
+    const color = resolveColor(this.appearanceValue('color'), 'var(--echo-color-8b93a0,#8B93A0)');
+    const background = resolveColor(this.appearanceValue('background_color'), 'var(--echo-color-f0f2f5,#F0F2F5)');
     this.style.setProperty('--state-color', color);
     this.style.setProperty('--state-background', background);
     const icon = this.appearanceValue('icon');
@@ -127,7 +128,10 @@ class EchoEntityCard extends EchoStyledCard {
   startTemplates() {
     if (this.config) startTemplates(this, Object.fromEntries(Object.keys(entityAppearanceDefaults).map(key => [key, this.config[key]])));
   }
-  appearanceValue(key) { return templateValue(this, this.config[key], key).trim(); }
+  appearanceValue(key) {
+    const value = templateValue(this, this.config[key], key).trim();
+    return key !== 'icon' && this.config[key] === entityAppearanceDefaults[key] ? paletteColor(value) : value;
+  }
   cancelGestures() { cancelCardGestures(this); }
   runAction(key) { return runCardAction(this, key); }
   static getConfigElement() { return document.createElement('echo-entity-editor'); }
@@ -146,7 +150,7 @@ class EchoContainerCard extends EchoStyledCard {
     this.shellWith(cardStyles.security + `
 .grid{display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:8px}
 .heading-row{display:flex;align-items:center;flex:0 0 38px}
-.heading{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:#24303E}
+.heading{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:var(--echo-color-24303e,#24303E)}
 .heading ha-icon{width:24px}.children{display:grid;gap:10px;grid-template-columns:repeat(${this.config.columns || 3},minmax(0,1fr));grid-auto-rows:minmax(114px,1fr);flex:1;min-height:0}
 .children>*{display:block;min-width:0;min-height:0;height:100%}
 :host([square]) .children>*{aspect-ratio:1;height:auto}

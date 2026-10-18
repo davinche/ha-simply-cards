@@ -1,0 +1,88 @@
+// Shared built-in palette. Explicit user colors bypass these tokens.
+export const themeStyle = `
+:host{
+  color-scheme:light;
+  --echo-color-202732:#202732;
+  --echo-color-202734:#202734;
+  --echo-color-253041:#253041;
+  --echo-color-263140:#263140;
+  --echo-color-293646:#293646;
+  --echo-color-818996:#818996;
+  --echo-color-ffffff:#FFFFFF;
+  --echo-color-fff9ef:#FFF9EF;
+  --echo-color-18212e:#18212E;
+  --echo-color-24303e:#24303E;
+  --echo-color-8a929e:#8A929E;
+  --echo-color-89919d:#89919D;
+  --echo-color-a0a6b0:#A0A6B0;
+  --echo-color-e9f2fe:#E9F2FE;
+  --echo-color-bcd1eb:#BCD1EB;
+  --echo-color-475a73:#475A73;
+  --echo-color-20334c:#20334C;
+  --echo-color-61748d:#61748D;
+  --echo-color-f3bd35:#F3BD35;
+  --echo-color-f2f4f7:#F2F4F7;
+  --echo-color-fafbfd:#FAFBFD;
+  --echo-color-e6f0ff:#E6F0FF;
+  --echo-color-3478f6:#3478F6;
+  --echo-color-fde9df:#FDE9DF;
+  --echo-color-ee773b:#EE773B;
+  --echo-color-e6f4ef:#E6F4EF;
+  --echo-color-fff0cd:#FFF0CD;
+  --echo-color-f0f2f5:#F0F2F5;
+  --echo-color-2a9477:#2A9477;
+  --echo-color-c68b14:#C68B14;
+  --echo-color-8b93a0:#8B93A0;
+  --echo-color-e5a51a:#E5A51A;
+  --echo-color-d8dde4:#D8DDE4;
+  --echo-color-e4f5ec:#E4F5EC;
+  --echo-color-fdece3:#FDECE3;
+  --echo-color-21926d:#21926D;
+  --echo-color-c97445:#C97445;
+  --echo-shadow:rgba(30,40,60,0.045);
+}
+:host([echo-dark]){
+  color-scheme:dark;
+  --echo-color-202732:#E7EDF5;
+  --echo-color-202734:#E7EDF5;
+  --echo-color-253041:#E7EDF5;
+  --echo-color-263140:#E7EDF5;
+  --echo-color-293646:#DCE5F0;
+  --echo-color-818996:#ADB8C7;
+  --echo-color-ffffff:#202731;
+  --echo-color-fff9ef:#302C28;
+  --echo-color-18212e:#F0F3F7;
+  --echo-color-24303e:#E7EDF5;
+  --echo-color-8a929e:#ADB8C7;
+  --echo-color-89919d:#ADB8C7;
+  --echo-color-a0a6b0:#9EABBD;
+  --echo-color-e9f2fe:#253C58;
+  --echo-color-bcd1eb:#172A43;
+  --echo-color-475a73:#BDCEE4;
+  --echo-color-20334c:#E4EFFD;
+  --echo-color-61748d:#A8BDD7;
+  --echo-color-f3bd35:#FFD166;
+  --echo-color-f2f4f7:#303B49;
+  --echo-color-fafbfd:#26313E;
+  --echo-color-e6f0ff:#223D60;
+  --echo-color-3478f6:#82B4FF;
+  --echo-color-fde9df:#4B3027;
+  --echo-color-ee773b:#FFAD80;
+  --echo-color-e6f4ef:#203E35;
+  --echo-color-fff0cd:#44391F;
+  --echo-color-f0f2f5:#303945;
+  --echo-color-2a9477:#76D6B2;
+  --echo-color-c68b14:#F4CC71;
+  --echo-color-8b93a0:#B0BAC8;
+  --echo-color-e5a51a:#D9AA43;
+  --echo-color-d8dde4:#4C596B;
+  --echo-color-e4f5ec:#203D33;
+  --echo-color-fdece3:#493127;
+  --echo-color-21926d:#79D7AE;
+  --echo-color-c97445:#F5B18A;
+  --echo-shadow:rgba(0,0,0,0.24);
+}
+`;
+
+export const paletteColor = value => /^#[0-9a-f]{6}$/i.test(value)
+  ? `var(--echo-color-${value.slice(1).toLowerCase()},${value})` : value;

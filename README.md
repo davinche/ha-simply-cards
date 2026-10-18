@@ -4,6 +4,8 @@ Reusable custom Home Assistant dashboard cards with visual editors, optional Jin
 
 The repository is named HA Simply Cards. Existing `custom:echo-…-card` types are deliberately retained so installed dashboards do not need renaming.
 
+Cards automatically follow Home Assistant’s light/dark setting. See [the palette, integration details and comparison preview](docs/THEMING.md).
+
 ## Install through HACS
 
 The repository must be public, and its first release must finish building before installation. HACS does not install the editable source directory.
@@ -104,7 +106,7 @@ The approved variant places smaller minus/plus buttons beside the target readout
 
 ### Entity and Container
 
-Entity supports name/icon overrides, color, state content, entity pictures, state hiding, horizontal orientation and independent card/icon tap, hold and double-tap actions. All gestures default to none. Actions include more-info, toggle, perform-action, navigate and URL. Container accepts arbitrary child cards through its visual editor. It is not limited to three children or any entity domain.
+Entity supports name/icon overrides, independent icon color (`color`) and icon-circle background (`background_color`), state content, entity pictures, state hiding, horizontal orientation and independent card/icon tap, hold and double-tap actions. Both colors default to state-based colors; choose them in the visual editor or supply CSS colors such as `#FFE4B5` or Home Assistant color names. Custom overrides stay fixed across states, including unavailable; clearing an override or selecting `state` restores the automatic colors. All gestures default to none. Actions include more-info, toggle, perform-action, navigate and URL. Container accepts arbitrary child cards through its visual editor. It is not limited to three children or any entity domain.
 
 Use `examples/reference-dashboard.yaml` as a generic reference; replace placeholder entities before testing. Production dashboards, user IDs and credentials are not included. Browser fixtures use synthetic entity/user IDs only.
 

@@ -7,8 +7,8 @@ ha-card {
   box-sizing:border-box;
   border-radius:24px;
   border:0;
-  background:linear-gradient(135deg,#FFFFFF,#FFF9EF);
-  box-shadow:0 3px 15px rgba(30,40,60,0.045);
+  background:linear-gradient(135deg,var(--echo-color-ffffff,#FFFFFF),var(--echo-color-fff9ef,#FFF9EF));
+  box-shadow:0 3px 15px var(--echo-shadow,rgba(30,40,60,0.045));
   padding:20px 24px;
   overflow:hidden
 }
@@ -23,26 +23,26 @@ ha-card {
   justify-self:start;
   align-self:center;
   font-size:18px;
-  color:#818996
+  color:var(--echo-color-818996,#818996)
 }
 [data-field="room"] {
   justify-self:start;
   align-self:center;
   font-size:43px;
   font-weight:750;
-  color:#18212E
+  color:var(--echo-color-18212e,#18212E)
 }
 [data-field="clock"] {
   justify-self:end;
   align-self:center;
   font-size:31px;
   font-weight:700;
-  color:#18212E
+  color:var(--echo-color-18212e,#18212E)
 }
 [data-field="date"] {
   justify-self:start;
   font-size:17px;
-  color:#818996
+  color:var(--echo-color-818996,#818996)
 }
 `,
   "weather": `
@@ -53,8 +53,8 @@ ha-card {
   box-sizing:border-box;
   border-radius:24px;
   border:0;
-  background:linear-gradient(125deg,#E9F2FE,#BCD1EB);
-  box-shadow:0 3px 15px rgba(30,40,60,0.045);
+  background:linear-gradient(125deg,var(--echo-color-e9f2fe,#E9F2FE),var(--echo-color-bcd1eb,#BCD1EB));
+  box-shadow:0 3px 15px var(--echo-shadow,rgba(30,40,60,0.045));
   padding:20px 22px;
   overflow:hidden
 }
@@ -74,30 +74,30 @@ ha-card {
 }
 ha-icon {
   width:62px;
-  color:#F3BD35
+  color:var(--echo-color-f3bd35,#F3BD35)
 }
 [data-field="eyebrow"] {
   justify-self:start;
   font-size:16px;
-  color:#475A73
+  color:var(--echo-color-475a73,#475A73)
 }
 [data-field="condition"] {
   justify-self:start;
   align-self:end;
   font-size:23px;
   font-weight:700;
-  color:#20334C
+  color:var(--echo-color-20334c,#20334C)
 }
 [data-field="temperature"] {
   justify-self:start;
   font-size:25px;
   font-weight:650;
-  color:#20334C
+  color:var(--echo-color-20334c,#20334C)
 }
 [data-field="humidity"] {
   justify-self:start;
   font-size:13px;
-  color:#61748D
+  color:var(--echo-color-61748d,#61748D)
 }
 `,
   "toggle": `
@@ -108,8 +108,8 @@ ha-card {
   box-sizing:border-box;
   border-radius:24px;
   border:0;
-  background:#FFFFFF;
-  box-shadow:0 3px 15px rgba(30,40,60,0.045);
+  background:var(--echo-color-ffffff,#FFFFFF);
+  box-shadow:0 3px 15px var(--echo-shadow,rgba(30,40,60,0.045));
   padding:18px;
   overflow:hidden
 }
@@ -135,7 +135,7 @@ ha-icon {
 .name {
   font-size:17px;
   font-weight:650;
-  color:#202732;
+  color:var(--echo-color-202732,#202732);
   justify-self:start;
   align-self:end;
   margin-top:7px
@@ -143,7 +143,7 @@ ha-icon {
 .label {
   font-size:14px;
   justify-self:start;
-  color:#8A929E;
+  color:var(--echo-color-8a929e,#8A929E);
   margin-top:2px
 }
 [data-field="toggle"] {
@@ -159,8 +159,8 @@ ha-card {
   box-sizing:border-box;
   border-radius:calc(24 * var(--echo-unit, 1px));
   border:0;
-  background:#FFFFFF;
-  box-shadow:0 calc(3 * var(--echo-unit, 1px)) calc(15 * var(--echo-unit, 1px)) rgba(30,40,60,0.045);
+  background:var(--echo-color-ffffff,#FFFFFF);
+  box-shadow:0 calc(3 * var(--echo-unit, 1px)) calc(15 * var(--echo-unit, 1px)) var(--echo-shadow,rgba(30,40,60,0.045));
   padding:calc(18 * var(--echo-unit, 1px));
   overflow:hidden
 }
@@ -182,13 +182,13 @@ ha-card {
   font-size:calc(19 * var(--echo-unit, 1px));
   line-height:calc(23 * var(--echo-unit, 1px));
   font-weight:650;
-  color:#202732
+  color:var(--echo-color-202732,#202732)
 }
 [data-field="status"] {
   justify-self:start;
   font-size:calc(14 * var(--echo-unit, 1px));
   line-height:calc(19 * var(--echo-unit, 1px));
-  color:#8A929E
+  color:var(--echo-color-8a929e,#8A929E)
 }
 [data-field="speed"] {
   width:100%;
@@ -235,8 +235,8 @@ ha-card {
   box-sizing:border-box;
   border-radius:24px;
   border:0;
-  background:#FFFFFF;
-  box-shadow:0 3px 15px rgba(30,40,60,0.045);
+  background:var(--echo-color-ffffff,#FFFFFF);
+  box-shadow:0 3px 15px var(--echo-shadow,rgba(30,40,60,0.045));
   padding:20px 22px;
   overflow:hidden
 }
@@ -312,7 +312,7 @@ ha-card {
   height:48px;
   width:48px;
   border-radius:50%;
-  background:#F2F4F7;
+  background:var(--echo-color-f2f4f7,#F2F4F7);
   box-shadow:none;
   border:0;
   padding:10px;
@@ -320,7 +320,7 @@ ha-card {
 }
 ha-icon {
   width:25px;
-  color:#293646
+  color:var(--echo-color-293646,#293646)
 }
 `,
   "climate": `
@@ -331,8 +331,8 @@ ha-card {
   box-sizing:border-box;
   border-radius:24px;
   border:0;
-  background:#FFFFFF;
-  box-shadow:0 3px 15px rgba(30,40,60,0.045);
+  background:var(--echo-color-ffffff,#FFFFFF);
+  box-shadow:0 3px 15px var(--echo-shadow,rgba(30,40,60,0.045));
   padding:18px;
   overflow:hidden
 }
@@ -358,26 +358,26 @@ ha-icon {
 .name {
   font-size:16px;
   font-weight:650;
-  color:#253041;
+  color:var(--echo-color-253041,#253041);
   justify-self:start;
   align-self:end
 }
 .label {
   font-size:13px;
-  color:#89919D;
+  color:var(--echo-color-89919d,#89919D);
   justify-self:start;
   margin-top:4px
 }
 [data-field="current"] {
   font-size:31px;
   font-weight:700;
-  color:#18212E
+  color:var(--echo-color-18212e,#18212E)
 }
 [data-field="hint"] {
   justify-self:start;
   align-self:end;
   font-size:11px;
-  color:#A0A6B0
+  color:var(--echo-color-a0a6b0,#A0A6B0)
 }
 `,
   "security": `
@@ -388,8 +388,8 @@ ha-card {
   box-sizing:border-box;
   border-radius:24px;
   border:0;
-  background:#FFFFFF;
-  box-shadow:0 3px 15px rgba(30,40,60,0.045);
+  background:var(--echo-color-ffffff,#FFFFFF);
+  box-shadow:0 3px 15px var(--echo-shadow,rgba(30,40,60,0.045));
   padding:17px;
   overflow:hidden
 }
@@ -423,7 +423,7 @@ ha-card {
 ha-card {
   height:100%;
   box-sizing:border-box;
-  background:#FAFBFD;
+  background:var(--echo-color-fafbfd,#FAFBFD);
   border:0;
   --ha-card-border-width:0px;
   border-radius:19px;
@@ -450,13 +450,13 @@ ha-icon {
 .name {
   font-size:13px;
   font-weight:650;
-  color:#263140;
+  color:var(--echo-color-263140,#263140);
   justify-self:center;
   margin-top:6px
 }
 .label {
   font-size:12px;
-  color:#89919D;
+  color:var(--echo-color-89919d,#89919D);
   justify-self:center;
   margin-top:3px
 }

@@ -1,3 +1,4 @@
+import { themeStyle } from './echo-theme.js';
 import { startTemplates, stopTemplates, templateValue } from './echo-templates.js';
 import { cardStyles } from './echo-styles.js';
 import { stubConfig, sliderCapability, textFields, normalizeTextConfig } from './echo-card-editor.js';
@@ -16,8 +17,8 @@ const gridDefaults = {
 
 export const available = entity => !!entity && !['unknown', 'unavailable'].includes(entity.state);
 export const climateColors = entity => entity?.state === 'cool'
-  ? { background: '#E6F0FF', color: '#3478F6' }
-  : { background: '#FDE9DF', color: '#EE773B' };
+  ? { background: 'var(--echo-color-e6f0ff,#E6F0FF)', color: 'var(--echo-color-3478f6,#3478F6)' }
+  : { background: 'var(--echo-color-fde9df,#FDE9DF)', color: 'var(--echo-color-ee773b,#EE773B)' };
 export function fanValues(entity) {
   const step = Number(entity?.attributes.percentage_step);
   const steps = Number.isFinite(step) && step > 0 ? Math.max(1, Math.min(100, Math.round(100 / step))) : 100;
@@ -32,7 +33,7 @@ const baseStyle = `
 :host{--echo-unit:1px}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-ha-card{display:block;position:relative;font:inherit;color:#202732;--ha-card-border-width:0px}
+ha-card{display:block;position:relative;font:inherit;color:var(--echo-color-202732,#202732);--ha-card-border-width:0px}
 .grid{display:grid;width:100%;height:100%;align-items:center;text-align:center}
 .img-cell{grid-area:i;display:flex;align-items:center;justify-content:center;overflow:hidden}
 ha-icon{display:block;height:auto;aspect-ratio:1;--mdc-icon-size:100%}
@@ -40,21 +41,21 @@ ha-icon{display:block;height:auto;aspect-ratio:1;--mdc-icon-size:100%}
 .label{grid-area:l;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 [data-field]{min-width:0}
 [role="button"]{cursor:pointer;touch-action:manipulation;outline:none}
-[role="button"]:focus-visible{outline:3px solid #3478F6;outline-offset:-3px}
+[role="button"]:focus-visible{outline:3px solid var(--echo-color-3478f6,#3478F6);outline-offset:-3px}
 [aria-disabled="true"]{cursor:default}
-.toggle{width:calc(46 * var(--echo-unit,1px));height:calc(26 * var(--echo-unit,1px));border-radius:calc(20 * var(--echo-unit,1px));padding:calc(3 * var(--echo-unit,1px));display:flex;background:var(--toggle-background,#D8DDE4);pointer-events:none}
+.toggle{width:calc(46 * var(--echo-unit,1px));height:calc(26 * var(--echo-unit,1px));border-radius:calc(20 * var(--echo-unit,1px));padding:calc(3 * var(--echo-unit,1px));display:flex;background:var(--toggle-background,var(--echo-color-d8dde4,#D8DDE4));pointer-events:none}
 .toggle.on{justify-content:flex-end}
 .toggle span{width:calc(20 * var(--echo-unit,1px));height:calc(20 * var(--echo-unit,1px));border-radius:50%;background:white;box-shadow:0 calc(1 * var(--echo-unit,1px)) calc(3 * var(--echo-unit,1px)) #0002}
 .info{text-align:left;overflow:hidden;width:100%}
 .info strong,.info span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.info strong{font-size:var(--media-heading,19px);font-weight:700;color:#202734}
-.info span{font-size:var(--media-status,14px);line-height:22px;color:#89919D}
-.security-heading{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:#24303E}
+.info strong{font-size:var(--media-heading,19px);font-weight:700;color:var(--echo-color-202734,#202734)}
+.info span{font-size:var(--media-status,14px);line-height:22px;color:var(--echo-color-89919d,#89919D)}
+.security-heading{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:var(--echo-color-24303e,#24303E)}
 .security-heading ha-icon{width:24px}
 .fan-speed{display:grid;grid-template-rows:18px 44px;width:100%;text-align:left}
-.fan-speed>span{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#818996}
-.fan-speed output{font-size:13px;font-weight:650;color:#2A9477}
-.fan-speed input{margin:0;width:100%;height:44px;accent-color:#2A9477}
+.fan-speed>span{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--echo-color-818996,#818996)}
+.fan-speed output{font-size:13px;font-weight:650;color:var(--echo-color-2a9477,#2A9477)}
+.fan-speed input{margin:0;width:100%;height:44px;accent-color:var(--echo-color-2a9477,#2A9477)}
 img{display:block}
 `;
 
@@ -128,12 +129,12 @@ const adaptiveStyle = `
 const climateControlStyle = `
 :host([temperature-control]) .grid{grid-template-columns:66px minmax(0,1fr) auto;column-gap:12px}
 :host([temperature-control]) [data-field="current"]{display:grid;grid-template-columns:44px minmax(68px,auto) 44px;grid-template-rows:14px 44px;column-gap:4px;row-gap:2px;align-items:center}
-.temperature-caption{grid-column:2;grid-row:1;font-size:12px;line-height:14px;font-weight:400;color:#89919D;text-align:center}
+.temperature-caption{grid-column:2;grid-row:1;font-size:12px;line-height:14px;font-weight:400;color:var(--echo-color-89919d,#89919D);text-align:center}
 .temperature-readout{grid-column:2;grid-row:2;display:flex;align-items:center;justify-content:center;height:44px;font:inherit;font-size:31px;line-height:1;white-space:nowrap}
-.temperature-adjust{grid-row:2;position:relative;isolation:isolate;display:grid;place-items:center;width:44px;height:44px;border:0;padding:0;background:transparent;color:#293646;font:inherit;font-size:24px;line-height:1;cursor:pointer}
-.temperature-adjust::before{content:"";position:absolute;width:36px;height:36px;border-radius:50%;background:#F2F4F7;z-index:-1}
+.temperature-adjust{grid-row:2;position:relative;isolation:isolate;display:grid;place-items:center;width:44px;height:44px;border:0;padding:0;background:transparent;color:var(--echo-color-293646,#293646);font:inherit;font-size:24px;line-height:1;cursor:pointer}
+.temperature-adjust::before{content:"";position:absolute;width:36px;height:36px;border-radius:50%;background:var(--echo-color-f2f4f7,#F2F4F7);z-index:-1}
 .temperature-adjust:disabled{opacity:.4;cursor:default}
-.temperature-adjust:focus-visible{outline:3px solid #3478F6;border-radius:50%}
+.temperature-adjust:focus-visible{outline:3px solid var(--echo-color-3478f6,#3478F6);border-radius:50%}
 .temperature-adjust:first-of-type{grid-column:1}.temperature-adjust:last-of-type{grid-column:3}
 :host([width="narrow"][temperature-control]) .grid{grid-template-columns:44px minmax(0,1fr) auto;column-gap:8px}
 :host([width="narrow"][temperature-control]) .temperature-readout{font-size:27px}
@@ -166,7 +167,7 @@ const presentationStyle = `
 :host([kind="weather"][weather-layout="inline"]) [data-field="summary"]{display:flex;align-items:center;justify-self:stretch;min-width:0;overflow:hidden;white-space:nowrap;text-align:left}
 :host([kind="weather"][weather-layout="inline"]) [data-field="condition"]{flex:0 1 auto;min-width:0;font-size:16px;line-height:20px;align-self:center}
 :host([kind="weather"][weather-layout="inline"]) [data-field="temperature"]{flex:none;font-size:16px;line-height:20px;font-weight:700}
-.weather-separator{flex:none;white-space:pre;font-size:16px;line-height:20px;color:#20334C}
+.weather-separator{flex:none;white-space:pre;font-size:16px;line-height:20px;color:var(--echo-color-20334c,#20334C)}
 :host([kind="weather"][weather-layout="inline"]) [data-field="eyebrow"]{font-size:12px;line-height:16px}
 :host([kind="weather"][weather-layout="inline"]) [data-field="humidity"]{font-size:12px;line-height:16px}
 `;
@@ -218,7 +219,7 @@ class EchoCard extends HTMLElement {
     this.iconCell = null;
     this.shadowRoot.replaceChildren();
     const style = document.createElement('style');
-    style.textContent = baseStyle + '\n' + cardStyles[this.kind] + (gridDefaults[this.kind] ? nativeStyle + adaptiveStyle : '') + presentationStyle + (this.kind === 'climate' ? climateControlStyle : '')
+    style.textContent = themeStyle + baseStyle + '\n' + cardStyles[this.kind] + (gridDefaults[this.kind] ? nativeStyle + adaptiveStyle : '') + presentationStyle + (this.kind === 'climate' ? climateControlStyle : '')
       + (this.kind === 'media-action' ? '\nha-card{width:var(--echo-action-size,48px);height:var(--echo-action-size,48px)}' : '')
       + (this.kind === 'fan-power' ? '\nha-card,.grid{height:var(--echo-power-size,44px)}.grid{grid-template-rows:var(--echo-power-size,44px)}.img-cell{width:var(--echo-power-size,44px);height:var(--echo-power-size,44px)}' : '')
       + (this.kind === 'art' ? '\nha-card{width:var(--echo-art-width,100px);height:var(--echo-art-height,118px)}' : '');
@@ -235,6 +236,7 @@ class EchoCard extends HTMLElement {
 
   set hass(value) {
     this._hass = value;
+    this.toggleAttribute('echo-dark', !!value?.themes?.darkMode);
     this.startTemplates();
     this.update();
   }
@@ -552,11 +554,11 @@ class EchoCard extends HTMLElement {
       if (this.weatherSeparator) this.weatherSeparator.hidden = !this.fields.condition.textContent || !this.fields.temperature.textContent;
     } else if (['toggle', 'fan-power'].includes(this.kind)) {
       const fan = this.config.entity.startsWith('fan.');
-      this.stateColors(on ? (fan ? '#E6F4EF' : '#FFF0CD') : '#F0F2F5', on ? (fan ? '#2A9477' : '#C68B14') : '#8B93A0');
+      this.stateColors(on ? (fan ? 'var(--echo-color-e6f4ef,#E6F4EF)' : 'var(--echo-color-fff0cd,#FFF0CD)') : 'var(--echo-color-f0f2f5,#F0F2F5)', on ? (fan ? 'var(--echo-color-2a9477,#2A9477)' : 'var(--echo-color-c68b14,#C68B14)') : 'var(--echo-color-8b93a0,#8B93A0)');
       this.setIcon(this.config.icon || (fan ? 'mdi:fan' : 'mdi:lightbulb'));
       this.text('l', status);
       this.fields.toggle.classList.toggle('on', on);
-      this.style.setProperty('--toggle-background', on ? (fan ? '#2A9477' : '#E5A51A') : '#D8DDE4');
+      this.style.setProperty('--toggle-background', on ? (fan ? 'var(--echo-color-2a9477,#2A9477)' : 'var(--echo-color-e5a51a,#E5A51A)') : 'var(--echo-color-d8dde4,#D8DDE4)');
       syncActionAccessibility(this, this.shell);
       if (this.iconCell.hasAttribute('role')) syncActionAccessibility(this, this.iconCell, 'icon_');
     } else if (this.kind === 'climate') {
@@ -578,7 +580,7 @@ class EchoCard extends HTMLElement {
       }
     } else if (this.kind === 'security-tile') {
       const secure = ['locked', 'closed'].includes(state);
-      this.stateColors(secure ? '#E4F5EC' : '#FDECE3', secure ? '#21926D' : '#C97445');
+      this.stateColors(secure ? 'var(--echo-color-e4f5ec,#E4F5EC)' : 'var(--echo-color-fdece3,#FDECE3)', secure ? 'var(--echo-color-21926d,#21926D)' : 'var(--echo-color-c97445,#C97445)');
       this.setIcon(this.config.icon || attributes.icon || (this.config.entity.startsWith('cover.')
         ? (state === 'closed' ? 'mdi:garage' : 'mdi:garage-open') : (state === 'locked' ? 'mdi:lock-outline' : 'mdi:lock-open-outline')));
       this.text('l', capitalize(state || 'unknown'));
@@ -621,8 +623,8 @@ class EchoCard extends HTMLElement {
       this.fields.speed.hidden = !capable && available(entity);
       this.range.disabled = this.preview || this.pending || !available(entity) || !capable;
       syncActionAccessibility(this, this.shell);
-      this.range.style.accentColor = light ? '#E5A51A' : '#2A9477';
-      this.output.style.color = light ? '#C68B14' : '#2A9477';
+      this.range.style.accentColor = light ? 'var(--echo-color-e5a51a,#E5A51A)' : 'var(--echo-color-2a9477,#2A9477)';
+      this.output.style.color = light ? 'var(--echo-color-c68b14,#C68B14)' : 'var(--echo-color-2a9477,#2A9477)';
       if (!this.editing || !available(entity)) {
         const brightness = state === 'off' ? 0 : Math.max(0, Math.min(100, Math.round((Number(attributes.brightness) || 0) * 100 / 255)));
         const values = light ? { steps: 100, percentage: brightness, position: brightness } : fanValues(entity);
