@@ -213,6 +213,8 @@ class EchoCard extends HTMLElement {
     this.removeAttribute('sizing');
     this.setAttribute('kind', this.kind);
     if (this.kind === 'header') this.setAttribute('header-layout', ['stacked', 'compact'].includes(config.header_layout) ? config.header_layout : 'auto');
+    if (this.kind === 'header') this.setAttribute('title-weight', Number(config.title_weight) === 500 ? '500' : '400');
+    this.toggleAttribute('compact-labels', config.compact_labels === true);
     if (this.kind === 'weather') this.setAttribute('weather-layout', config.weather_layout === 'inline' ? 'inline' : 'stacked');
     this.toggleAttribute('auto-rows', config.grid_options?.rows === 'auto');
     this.style.setProperty('--echo-natural-height', `${this.getGridOptions().rows * 64 - 8}px`);

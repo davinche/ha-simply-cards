@@ -148,6 +148,7 @@ class EchoCardEditor extends HTMLElement {
       if (['toggle', 'fan', 'climate'].includes(this.kind)) this.control(this.form, 'Icon (optional, for example mdi:lamp)', 'icon');
     }
     if (this.kind === 'header') this.control(this.form, 'Header arrangement', 'header_layout', { defaultValue: 'auto', options: [{ value: 'auto', label: 'Automatic (default)' }, { value: 'stacked', label: 'Greeting above title' }, { value: 'compact', label: 'Compact: greeting below clock' }] });
+    if (this.kind === 'header') this.control(this.form, 'Room title weight', 'title_weight', { defaultValue: '400', options: [{ value: '400', label: 'Regular (default)' }, { value: '500', label: 'Medium' }] });
     if (this.kind === 'weather') this.control(this.form, 'Weather arrangement', 'weather_layout', { defaultValue: 'stacked', options: [{ value: 'stacked', label: 'Temperature below condition (default)' }, { value: 'inline', label: 'Temperature beside condition' }] });
     if (this.kind === 'weather') this.control(this.form, 'Condition background images (ATELIER)', 'weather_images', { checkbox: true });
     if (textFields[this.kind]) {
@@ -175,6 +176,7 @@ class EchoCardEditor extends HTMLElement {
       this.form.append(group);
     }
     if (['toggle', 'fan'].includes(this.kind)) this.control(this.form, 'Show slider (brightness or fan speed)', 'slider', { checkbox: true, defaultValue: this.kind === 'fan' });
+    if (['toggle', 'fan'].includes(this.kind)) this.control(this.form, 'Compact labels (16px)', 'compact_labels', { checkbox: true });
     if (['toggle', 'fan'].includes(this.kind)) {
       this.actionForm = document.createElement('ha-form');
       this.actionForm.dataset.key = 'actions';

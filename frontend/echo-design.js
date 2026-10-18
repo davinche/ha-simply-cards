@@ -14,6 +14,7 @@ export const designStyle = `
 :host([kind="header"]) ha-card,:host([kind="toggle"]) ha-card,:host([kind="climate"]) ha-card,:host([kind="media"]) ha-card,:host([kind="security"]) ha-card,:host([kind="container"]) ha-card,:host([kind="fan"]) ha-card{border-radius:28px;border:1px solid var(--echo-design-border);background:linear-gradient(125deg,var(--echo-design-surface),var(--echo-design-end));box-shadow:0 8px 24px #58492F09;color:var(--echo-design-text)}
 :host([kind="header"]) [data-field="greeting"]{font-family:var(--echo-font-interface,Inter,sans-serif);font-weight:500}
 :host([kind="header"]) [data-field="room"]{font-family:var(--echo-font-display,"Cormorant Garamond",Georgia,serif);font-weight:400}
+:host([kind="header"][title-weight="500"]) [data-field="room"]{font-weight:500}
 :host([kind="header"]) ha-card{background:linear-gradient(115deg,var(--echo-design-surface),var(--echo-design-header))}
 :host([kind="header"][roomy][header-layout="auto"]) ha-card{padding:24px 28px}
 :host([kind="header"][roomy][header-layout="auto"]) .grid{grid-template-rows:24px minmax(0,1fr) 26px}
@@ -76,4 +77,5 @@ export const designStyle = `
 :host([kind="entity"][roomy]:not([horizontal])) .label,:host([kind="security-tile"][roomy]) .label{font-size:17px;line-height:24px;margin-top:6px;color:var(--echo-design-secondary)}
 `.replace(/(-?\d*\.?\d+)px/g, 'calc($1px * var(--echo-design-scale,1))')
   // JS resolves the transport size separately when calculating available width.
-  .replace(/--echo-media-control-size:calc\((\d+)px \* var\(--echo-design-scale,1\)\)/g, '--echo-media-control-size:$1px');
+  .replace(/--echo-media-control-size:calc\((\d+)px \* var\(--echo-design-scale,1\)\)/g, '--echo-media-control-size:$1px')
+  + '\n:host([kind="toggle"][compact-labels]) .name,:host([kind="fan"][compact-labels]) [data-field="title"]{font-size:16px;line-height:22px;font-weight:500}';

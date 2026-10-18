@@ -117,6 +117,11 @@ not included. Browser fixtures use synthetic entity/user IDs only.
 
 ## Updates and development
 
+From beta.10, Header supports `title_weight: 500` for a bundled Medium room-title
+face (default 400). Control and Fan support `compact_labels: true` for matching
+16px labels with or without a slider. Both options are available in their visual
+editors; omit them to preserve existing typography.
+
 After publishing a new release, use HACS **Update**, then fully reload dashboard browsers. HACS update discovery is not instantaneous; refresh repository information if needed. Never manually edit installed `/www/community/ha-simply-cards/` files: upgrades replace them.
 
 See [maintainer instructions](docs/MAINTAINING.md) for the edit → test → push → release workflow, prereleases and rollback. No license has been selected for this project; choose one explicitly before inviting redistribution/contributions.

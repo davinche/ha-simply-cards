@@ -49,6 +49,11 @@ Exact static Latin webfont faces are embedded in the JavaScript resource, with O
 under `frontend/fonts/`. No Google Fonts request is made at runtime. Other scripts
 fall back to Segoe UI / Arial or Georgia. Override `--echo-font-interface` and
 `--echo-font-display` on an ancestor to use a household theme's fonts.
+Headers default to Cormorant Garamond 400. Set `title_weight: 500` for the bundled
+Medium face on a smaller room title; this does not affect weather typography.
+Control/Fan cards can opt into `compact_labels: true` for matching Inter
+16px/22px, weight 500 labels, independent of slider visibility and allocation.
+Both options are available from beta.10 and leave existing configurations unchanged.
 Reserve the serif for the room title and weather condition only. All other text,
 including greeting, Music, Security, labels, descriptions, time, date, and numeric
 readings, uses Inter. Shared production styles live in `frontend/echo-design.js`.
