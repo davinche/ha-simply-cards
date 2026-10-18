@@ -1,6 +1,6 @@
 {
   "name": "ha-simply-cards",
-  "version": "0.1.1-beta.5",
+  "version": "0.1.1-beta.6",
   "private": true,
   "description": "Reusable custom Home Assistant cards with visual editors and native grid support",
   "repository": "github:davinche/ha-simply-cards",
@@ -9,8 +9,9 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node tests/verify.cjs && node tests/theme.cjs",
-    "test:bundle": "node tests/verify.cjs --bundle && node tests/theme.cjs --bundle",
+    "test": "node tests/verify.cjs && node tests/theme.cjs && node tests/luxury.cjs && node tests/design.cjs && node tests/weather.cjs",
+    "test:bundle": "node tests/verify.cjs --bundle && node tests/theme.cjs --bundle && node tests/luxury.cjs --bundle && node tests/design.cjs --bundle && node tests/weather.cjs --bundle",
+    "check:privacy": "node scripts/check-privacy.mjs",
     "check:release": "node scripts/check-release.mjs"
   },
   "devDependencies": {

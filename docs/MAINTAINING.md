@@ -47,3 +47,11 @@ The harness can use an existing browser/runtime via `ECHO_PLAYWRIGHT_PATH`, `ECH
 ## Privacy and scope
 
 Never copy production dashboards, personal entity/user IDs, tokens, `.env` files, browser profiles or local machine paths into this repository. Examples are placeholders; fixtures use synthetic IDs. Do not rename the existing `echo-…` custom-element tags during packaging: installed dashboard YAML depends on them. Component updates must not overwrite dashboard views or change layout defaults without explicit requirements.
+
+Before committing, review `git diff --cached` including prose and new fixture
+files. Keep deployment-specific review notes and dashboard mock sources local;
+publish only generic examples with clearly synthetic IDs. Run
+`npm run check:privacy -- --staged` before pushing. CI also scans the public tree
+for personal paths, private network URLs, credential assignments, and personal
+HA identifiers. This pattern check supplements human review; it cannot establish
+that arbitrary names, addresses, or screenshots are safe to publish.

@@ -39,6 +39,7 @@ HACS updates component code, not dashboard configuration. Back up and maintain y
 | Echo Media | `custom:echo-media-card` | Player metadata, transport and mute |
 | Echo Entity | `custom:echo-entity-card` | One generic entity with configurable gestures |
 | Echo Container | `custom:echo-container-card` | Any number of child cards, retaining the custom group appearance |
+| Echo Image Button | `custom:echo-image-button-card` | Image, icon, heading, description and separate card/icon gestures |
 
 Old Fan and grouped Security types remain compatibility aliases, not new picker choices. Entity/Container are the generic replacements for new configurations. Native Tile features and Assist actions are not implemented.
 
@@ -115,3 +116,16 @@ Use `examples/reference-dashboard.yaml` as a generic reference; replace placehol
 After publishing a new release, use HACS **Update**, then fully reload dashboard browsers. HACS update discovery is not instantaneous; refresh repository information if needed. Never manually edit installed `/www/community/ha-simply-cards/` files: upgrades replace them.
 
 See [maintainer instructions](docs/MAINTAINING.md) for the edit → test → push → release workflow, prereleases and rollback. No license has been selected for this project; choose one explicitly before inviting redistribution/contributions.
+
+## Design system and image navigation
+
+See [the design system](docs/DESIGN-SYSTEM.md) for the warm neutral palette,
+bundled Inter/Cormorant fonts, dark mode, and configuration examples for
+`custom:echo-image-button-card` and `layout: horizontal` on entity cards.
+
+Enable the built-in condition backgrounds with `weather_images: true` on a Weather
+card. All 15 weather conditions plus unknown/unavailable fallbacks are included
+in the single-file bundle; see [weather imagery and configuration](docs/WEATHER.md).
+Image Buttons and horizontal entity layouts are opt-in and do not rearrange an
+existing dashboard. Room titles and weather conditions use the serif font;
+all other text uses Inter. Larger allocations get the expanded visual scale.

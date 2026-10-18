@@ -375,7 +375,7 @@ async function run() {
       if (editor.form!==sameForm) throw new Error('Editing replaced form and lost input focus');
       const backgroundField=editor.form.schema.find(field=>field.name==='background_color');
       if(backgroundField?.selector.template.preview!==false || !editor.form.computeLabel(backgroundField).startsWith('Icon background color'))throw new Error('Entity background template editor missing');
-      for(const [state,expected] of [['on','rgb(228, 245, 236)'],['off','rgb(240, 242, 245)'],['unavailable','rgb(240, 242, 245)']]){
+      for(const [state,expected] of [['on','rgb(226, 236, 227)'],['off','rgb(233, 226, 215)'],['unavailable','rgb(233, 226, 215)']]){
         card.setConfig({...base,color:'#3478F6'});
         card.hass={...mockHass,states:{...mockHass.states,[base.entity]:{...mockHass.states[base.entity],state}}};
         // The mock's default-template evaluator reads its backing state map.
@@ -888,7 +888,7 @@ async function run() {
         if (Math.abs(art.width-art.height)>1) throw new Error('Media artwork is not square');
         if (height>width) {
           if (art.bottom>info.top+1 || info.bottom>controls[0].top+1) throw new Error('Portrait media did not stack artwork/text/controls');
-        } else if (controls.some(box=>Math.abs(box.bottom-art.bottom)>1)) throw new Error('Landscape art and controls do not share bottom edge');
+        } else if (!media.hasAttribute('roomy') && controls.some(box=>Math.abs(box.bottom-art.bottom)>1)) throw new Error('Compact landscape art and controls do not share bottom edge');
         for (const box of [art,info,...controls]) if (box.top<bounds.top-1 || box.bottom>bounds.bottom+1 || box.left<bounds.left-1 || box.right>bounds.right+1) throw new Error('Responsive media content clipped');
         if (width===850 && art.width<=previousSize) throw new Error('Artwork failed to grow in taller landscape');
         previousSize=art.width;
@@ -912,7 +912,7 @@ async function run() {
       await icon.focus();await page.keyboard.press('Enter');
       assert.equal(await page.evaluate(()=>calls.splice(0).length),1);
       const iconBox=await icon.boundingBox();
-      await page.mouse.move(iconBox.x+10,iconBox.y+10);await page.mouse.down();await page.waitForTimeout(550);await page.mouse.up();
+      await page.mouse.move(iconBox.x+iconBox.width/2,iconBox.y+iconBox.height/2);await page.mouse.down();await page.waitForTimeout(550);await page.mouse.up();
       assert.deepEqual(await page.evaluate(()=>infos.splice(0)),['fan.demo_3']);
       assert.equal(await page.evaluate(()=>calls.length),0);
       const label=card.locator(slider?'[data-field="title"]':'.name');
@@ -1026,14 +1026,14 @@ async function run() {
       const {entityAppearanceDefaults}=await import('../frontend/echo-entity-templates.js');
       const card=document.createElement('echo-entity-card');document.body.append(card);
       for (const [entity,state,color,background,icon] of [
-        ['light.demo_5','on','rgb(198, 139, 20)','rgb(255, 240, 205)','mdi:lightbulb'],
-        ['light.demo_5','off','rgb(139, 147, 160)','rgb(240, 242, 245)','mdi:lightbulb'],
-        ['lock.demo_9','locked','rgb(33, 146, 109)','rgb(228, 245, 236)','mdi:lock-outline'],
+        ['light.demo_5','on','rgb(154, 121, 75)','rgb(237, 227, 211)','mdi:lightbulb'],
+        ['light.demo_5','off','rgb(114, 115, 108)','rgb(233, 226, 215)','mdi:lightbulb'],
+        ['lock.demo_9','locked','rgb(45, 114, 92)','rgb(226, 236, 227)','mdi:lock-outline'],
         ['lock.demo_9','unlocked','rgb(201, 116, 69)','rgb(253, 236, 227)','mdi:lock-open-outline'],
-        ['cover.demo_2','closed','rgb(33, 146, 109)','rgb(228, 245, 236)','mdi:garage'],
+        ['cover.demo_2','closed','rgb(45, 114, 92)','rgb(226, 236, 227)','mdi:garage'],
         ['cover.demo_2','open','rgb(201, 116, 69)','rgb(253, 236, 227)','mdi:garage-open'],
-        ['fan.demo_3','on','rgb(33, 146, 109)','rgb(228, 245, 236)','mdi:fan'],
-        ['light.demo_5','unavailable','rgb(139, 147, 160)','rgb(240, 242, 245)','mdi:lightbulb'],
+        ['fan.demo_3','on','rgb(45, 114, 92)','rgb(226, 236, 227)','mdi:fan'],
+        ['light.demo_5','unavailable','rgb(114, 115, 108)','rgb(233, 226, 215)','mdi:lightbulb'],
       ]){
         patchState(entity,state);card.setConfig({entity});card.hass=mockHass;await card.templateReady;
         if(getComputedStyle(card.icon).color!==color || getComputedStyle(card.iconCell).backgroundColor!==background || card.icon.getAttribute('icon')!==icon)throw new Error(`Wrong Entity default: ${entity}/${state}`);
@@ -1068,10 +1068,10 @@ async function run() {
       send('color',{result:'red'});send('icon',{result:'mdi:lamp'});
       if(getComputedStyle(card.icon).color!=='rgb(255, 0, 0)' || card.icon.getAttribute('icon')!=='mdi:lamp')throw new Error('Reactive Entity output ignored');
       send('icon',{result:'phu:ceiling-fan'});if(card.icon.getAttribute('icon')!=='phu:ceiling-fan')throw new Error('Custom icon namespace lost');
-      send('color',{error:'Invalid Jinja'});if(!card.hasAttribute('template-error') || getComputedStyle(card.icon).color!=='rgb(139, 147, 160)')throw new Error('Entity error fallback missing');
+      send('color',{error:'Invalid Jinja'});if(!card.hasAttribute('template-error') || getComputedStyle(card.icon).color!=='rgb(114, 115, 108)')throw new Error('Entity error fallback missing');
       send('color',{result:'#0000FF'});if(card.hasAttribute('template-error'))throw new Error('Entity error recovery failed');
       send('background_color',{result:'<img src=x onerror=alert(1)>'});send('icon',{result:'<script>alert(1)</script>'});
-      if(card.shadowRoot.querySelector('script') || card.icon.getAttribute('icon')!=='' || getComputedStyle(card.iconCell).backgroundColor!=='rgb(240, 242, 245)')throw new Error('Unsafe Entity appearance output accepted');
+      if(card.shadowRoot.querySelector('script') || card.icon.getAttribute('icon')!=='' || getComputedStyle(card.iconCell).backgroundColor!=='rgb(233, 226, 215)')throw new Error('Unsafe Entity appearance output accepted');
       card.setConfig({...config,entity:'lock.demo_9'});await card.templateReady;await Promise.resolve();
       streams[0].callback({result:'#FF0000'});
       if(streams.slice(0,3).some(stream=>!stream.closed) || getComputedStyle(card.icon).color==='rgb(255, 0, 0)' || streams.at(-1).parameters.variables.entity!=='lock.demo_9')throw new Error('Stale Entity subscription applied after entity change');

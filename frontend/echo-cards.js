@@ -1,4 +1,6 @@
 import { themeStyle } from './echo-theme.js';
+import { designStyle } from './echo-design.js';
+import { weatherAppearance, weatherImageStyle } from './echo-weather.js';
 import { startTemplates, stopTemplates, templateValue } from './echo-templates.js';
 import { cardStyles } from './echo-styles.js';
 import { stubConfig, sliderCapability, textFields, normalizeTextConfig } from './echo-card-editor.js';
@@ -29,7 +31,7 @@ export function fanValues(entity) {
 export const fanPercentage = (position, steps) => Math.floor(Math.max(0, Math.min(steps, Number(position))) * 100 / steps);
 const capitalize = value => value.charAt(0).toUpperCase() + value.slice(1);
 const baseStyle = `
-:host{display:block;height:100%;min-width:0;min-height:0;margin:0!important;font-family:var(--paper-font-body1_-_font-family,Roboto,Arial,sans-serif);-webkit-tap-highlight-color:transparent}
+:host{display:block;height:100%;min-width:0;min-height:0;margin:0!important;font-family:var(--echo-font-interface,Inter,"Segoe UI",Arial,sans-serif);-webkit-tap-highlight-color:transparent}
 :host{--echo-unit:1px}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -40,6 +42,7 @@ ha-icon{display:block;height:auto;aspect-ratio:1;--mdc-icon-size:100%}
 .name{grid-area:n;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .label{grid-area:l;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 [data-field]{min-width:0}
+[data-field="greeting"]{font-family:var(--echo-font-display,"Cormorant Garamond",Georgia,serif);font-weight:400}
 [role="button"]{cursor:pointer;touch-action:manipulation;outline:none}
 [role="button"]:focus-visible{outline:3px solid var(--echo-color-3478f6,#3478F6);outline-offset:-3px}
 [aria-disabled="true"]{cursor:default}
@@ -48,13 +51,13 @@ ha-icon{display:block;height:auto;aspect-ratio:1;--mdc-icon-size:100%}
 .toggle span{width:calc(20 * var(--echo-unit,1px));height:calc(20 * var(--echo-unit,1px));border-radius:50%;background:white;box-shadow:0 calc(1 * var(--echo-unit,1px)) calc(3 * var(--echo-unit,1px)) #0002}
 .info{text-align:left;overflow:hidden;width:100%}
 .info strong,.info span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.info strong{font-size:var(--media-heading,19px);font-weight:700;color:var(--echo-color-202734,#202734)}
+.info strong{font-size:var(--media-heading,19px);font-weight:500;color:var(--echo-color-202734,#202734)}
 .info span{font-size:var(--media-status,14px);line-height:22px;color:var(--echo-color-89919d,#89919D)}
-.security-heading{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:var(--echo-color-24303e,#24303E)}
+.security-heading{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:500;color:var(--echo-color-24303e,#24303E)}
 .security-heading ha-icon{width:24px}
 .fan-speed{display:grid;grid-template-rows:18px 44px;width:100%;text-align:left}
 .fan-speed>span{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--echo-color-818996,#818996)}
-.fan-speed output{font-size:13px;font-weight:650;color:var(--echo-color-2a9477,#2A9477)}
+.fan-speed output{font-size:13px;font-weight:500;color:var(--echo-color-2a9477,#2A9477)}
 .fan-speed input{margin:0;width:100%;height:44px;accent-color:var(--echo-color-2a9477,#2A9477)}
 img{display:block}
 `;
@@ -71,8 +74,8 @@ ha-card{height:100%;min-height:0}
 :host([kind="toggle"]) ha-card{padding:12px}
 :host([kind="toggle"]) .grid{grid-template-rows:40px minmax(0,1fr) 19px}
 :host([kind="toggle"]) .img-cell{width:40px;height:40px}
-:host([kind="toggle"]) .name{font-size:17px;line-height:21px;margin-top:3px}
-:host([kind="toggle"]) .label{font-size:13px;line-height:19px;margin-top:0}
+:host([kind="toggle"]) .name{font-size:18px;line-height:24px;margin-top:3px}
+:host([kind="toggle"]) .label{font-size:14px;line-height:20px;margin-top:0}
 :host([kind="weather"]) ha-card{padding:12px}
 :host([kind="weather"]) .grid{grid-template-columns:52px minmax(0,1fr);column-gap:10px}
 :host([kind="weather"]) .img-cell{width:48px;height:48px}
@@ -166,7 +169,7 @@ const presentationStyle = `
 :host([kind="weather"][weather-layout="inline"]) .img-cell,:host([kind="weather"][weather-layout="inline"]) ha-icon{width:44px;height:44px}
 :host([kind="weather"][weather-layout="inline"]) [data-field="summary"]{display:flex;align-items:center;justify-self:stretch;min-width:0;overflow:hidden;white-space:nowrap;text-align:left}
 :host([kind="weather"][weather-layout="inline"]) [data-field="condition"]{flex:0 1 auto;min-width:0;font-size:16px;line-height:20px;align-self:center}
-:host([kind="weather"][weather-layout="inline"]) [data-field="temperature"]{flex:none;font-size:16px;line-height:20px;font-weight:700}
+:host([kind="weather"][weather-layout="inline"]) [data-field="temperature"]{flex:none;font-size:16px;line-height:20px;font-weight:500}
 .weather-separator{flex:none;white-space:pre;font-size:16px;line-height:20px;color:var(--echo-color-20334c,#20334C)}
 :host([kind="weather"][weather-layout="inline"]) [data-field="eyebrow"]{font-size:12px;line-height:16px}
 :host([kind="weather"][weather-layout="inline"]) [data-field="humidity"]{font-size:12px;line-height:16px}
@@ -219,10 +222,11 @@ class EchoCard extends HTMLElement {
     this.iconCell = null;
     this.shadowRoot.replaceChildren();
     const style = document.createElement('style');
-    style.textContent = themeStyle + baseStyle + '\n' + cardStyles[this.kind] + (gridDefaults[this.kind] ? nativeStyle + adaptiveStyle : '') + presentationStyle + (this.kind === 'climate' ? climateControlStyle : '')
+    style.textContent = themeStyle + baseStyle + '\n' + cardStyles[this.kind] + (gridDefaults[this.kind] ? nativeStyle + adaptiveStyle : '') + presentationStyle + (this.kind === 'weather' ? weatherImageStyle : '') + (this.kind === 'climate' ? climateControlStyle : '')
       + (this.kind === 'media-action' ? '\nha-card{width:var(--echo-action-size,48px);height:var(--echo-action-size,48px)}' : '')
       + (this.kind === 'fan-power' ? '\nha-card,.grid{height:var(--echo-power-size,44px)}.grid{grid-template-rows:var(--echo-power-size,44px)}.img-cell{width:var(--echo-power-size,44px);height:var(--echo-power-size,44px)}' : '')
-      + (this.kind === 'art' ? '\nha-card{width:var(--echo-art-width,100px);height:var(--echo-art-height,118px)}' : '');
+      + (this.kind === 'art' ? '\nha-card{width:var(--echo-art-width,100px);height:var(--echo-art-height,118px)}' : '') + designStyle;
+    this.toggleAttribute('primary-action', this.kind === 'media-action' && this.config.service === 'media_play_pause');
     this.shell = document.createElement('ha-card');
     this.grid = document.createElement('div');
     this.grid.className = 'grid';
@@ -266,9 +270,10 @@ class EchoCard extends HTMLElement {
     }
   }
   startSizing() {
-    if (!this.isConnected || !this.config || !gridDefaults[this.kind] || this.resizeObserver) return;
+    if (!this.isConnected || !this.config || (!gridDefaults[this.kind] && this.kind !== 'security-tile') || this.resizeObserver) return;
     this.resizeObserver = new ResizeObserver(entries => {
       const { width, height } = entries[0].contentRect;
+      this.toggleAttribute('roomy', height >= 180);
       this.setAttribute('width', width < 440 ? 'narrow' : 'wide');
       const threshold = { header: 100, weather: 90, fan: 170, media: 160, security: 235 }[this.kind] || 0;
       this.setAttribute('height', height < threshold ? 'short' : 'tall');
@@ -425,6 +430,16 @@ class EchoCard extends HTMLElement {
     if (kind === 'header') {
       for (const field of ['greeting', 'room', 'date', 'clock']) this.field(field);
     } else if (kind === 'weather') {
+      this.toggleAttribute('weather-image', this.config.weather_images === true);
+      this.removeAttribute('weather-fallback');
+      this.weatherPhoto = null;
+      if (this.config.weather_images === true) {
+        this.weatherPhoto = document.createElement('img');
+        this.weatherPhoto.className = 'weather-photo'; this.weatherPhoto.alt = '';
+        this.weatherPhoto.addEventListener('error', () => { this.weatherPhoto.hidden = true; });
+        const scrim = document.createElement('div'); scrim.className = 'weather-scrim';
+        this.shell.prepend(this.weatherPhoto, scrim);
+      }
       this.icon();
       for (const field of ['eyebrow', 'condition', 'temperature', 'humidity']) this.field(field);
       if (this.config.weather_layout === 'inline') {
@@ -548,6 +563,15 @@ class EchoCard extends HTMLElement {
     if (this.kind === 'header') {
       for (const field of ['greeting', 'room', 'date', 'clock']) this.text(field);
     } else if (this.kind === 'weather') {
+      if (this.weatherPhoto) {
+        const appearance = weatherAppearance(state, this.hasAttribute('echo-dark'));
+        this.toggleAttribute('weather-fallback', ['unknown', 'unavailable'].includes(appearance.key));
+        this.style.setProperty('--echo-weather-icon', appearance.color);
+        if (this.weatherPhoto.getAttribute('src') !== appearance.image) {
+          this.weatherPhoto.hidden = false;
+          this.weatherPhoto.src = appearance.image;
+        }
+      }
       const icon = this.displayText('icon');
       this.setIcon(icon === '…' || icon === '—' ? '' : icon);
       for (const field of ['eyebrow', 'condition', 'temperature', 'humidity']) this.text(field);

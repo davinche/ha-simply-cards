@@ -36,14 +36,14 @@ const root = path.resolve(__dirname, '..');
       }
       const entity = document.querySelector('section[data-dark="true"] echo-entity-card');
       const icon = entity.shadowRoot.querySelector('ha-icon');
-      if (getComputedStyle(icon).color !== 'rgb(121, 215, 174)') throw new Error('Built-in entity state color did not adapt');
-      for (const [state, expected] of [['unlocked','rgb(245, 177, 138)'],['unavailable','rgb(176, 186, 200)'],['locked','rgb(121, 215, 174)']]) {
+      if (getComputedStyle(icon).color !== 'rgb(155, 213, 185)') throw new Error('Built-in entity state color did not adapt');
+      for (const [state, expected] of [['unlocked','rgb(245, 177, 138)'],['unavailable','rgb(185, 182, 175)'],['locked','rgb(155, 213, 185)']]) {
         patchState(entity.config.entity,state);
         entity.hass = {...mockHass,themes:{darkMode:true}};
         if (getComputedStyle(icon).color !== expected) throw new Error('Wrong dark state color: '+state);
       }
       entity.hass = mockHass;
-      if (entity.hasAttribute('echo-dark') || getComputedStyle(icon).color !== 'rgb(33, 146, 109)') throw new Error('Missing theme data must fall back to light');
+      if (entity.hasAttribute('echo-dark') || getComputedStyle(icon).color !== 'rgb(45, 114, 92)') throw new Error('Missing theme data must fall back to light');
       entity.hass = {...mockHass,themes:{darkMode:true}};
       entity.setConfig({...entity.config,color:'#21926D',background_color:'#E4F5EC'});
       if (getComputedStyle(entity.shadowRoot.querySelector('ha-icon')).color !== 'rgb(33, 146, 109)') throw new Error('Custom color changed');

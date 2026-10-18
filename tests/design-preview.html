@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Demo · Simply Cards design revision</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#F5F3EE;color:#2F3530;font-family:Inter,sans-serif;font-weight:400;-webkit-font-smoothing:antialiased}
+body.dark{background:#171A19;color:#F1EDE5}
+main{width:1280px;height:800px;padding:28px;display:grid;grid-template-rows:212px 192px 304px;gap:18px}
+.top{display:grid;grid-template-columns:7fr 5fr;gap:18px}
+.controls{display:grid;grid-template-columns:3fr 3fr 6fr;gap:18px}
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+main>*,.top>*,.controls>*,.bottom>*{min-height:0;min-width:0}
+</style>
+<main>
+  <div class="top" id="overview"></div>
+  <div class="controls" id="controls"></div>
+  <div class="bottom" id="bottom"></div>
+</main>
+<script type="module">
+import './native-mocks.js';
+await import('./preview-icons.js');
+await import('../frontend/echo-cards.js');
+const {weatherConditions}=await import('../frontend/echo-weather.js');
+const {templateDefaults}=await import('../frontend/echo-card-editor.js');
+const weatherDefaults=templateDefaults('weather');
+const requestedWeather=new URLSearchParams(location.search).get('weather') || 'cloudy';
+const dark=new URLSearchParams(location.search).get('theme')==='dark';
+document.body.classList.toggle('dark',dark);
+const hass={themes:{darkMode:dark},config:{unit_system:{temperature:'°F'}},states:{
+ 'switch.example_a':{state:'off',attributes:{friendly_name:'Control A'}},
+ 'light.example_b':{state:'off',attributes:{friendly_name:'Control B',supported_color_modes:['brightness'],brightness:0}},
+ 'climate.example':{state:'cool',attributes:{friendly_name:'Climate',temperature:72,current_temperature:72,min_temp:60,max_temp:85,hvac_modes:['cool','heat','off']}},
+ 'weather.example':{state:requestedWeather,attributes:{temperature:73,humidity:33}},
+ 'media_player.example':{state:'idle',attributes:{friendly_name:'Music'}},
+ 'lock.example_a':{state:'locked',attributes:{friendly_name:'Entry A'}},
+ 'lock.example_b':{state:'locked',attributes:{friendly_name:'Entry B'}},
+ 'cover.example':{state:'closed',attributes:{friendly_name:'Cover'}}
+},callService:async()=>{}};
+const weatherStreams=new Set();
+function weatherText(parameters){
+  const slot=parameters.variables.template_slot;
+  if(parameters.template!==weatherDefaults[slot])return parameters.template;
+  const source=hass.states['weather.example'];const state=source?.state || 'unavailable';
+  const attributes=source?.attributes || {};const unit=attributes.temperature_unit || '°F';
+  const condition=weatherConditions[state] || weatherConditions.unknown;
+  return {condition:condition.label,icon:condition.icon,
+    temperature:['unknown','unavailable'].includes(state)?'--'+unit:attributes.temperature==null?'--':Math.round(attributes.temperature)+unit,
+    humidity:state==='unknown'?'No data available':state==='unavailable'?'Weather service unavailable':attributes.humidity==null?'':`Humidity ${attributes.humidity}%`,
+  }[slot];
+}
+hass.connection={subscribeMessage:async(callback,parameters)=>{
+  const stream={callback,parameters};weatherStreams.add(stream);callback({result:weatherText(parameters)});
+  return()=>weatherStreams.delete(stream);
+}};
+window.demoCards=[];
+function card(config,parent){const node=document.createElement(config.type.slice(7));node.setConfig(config);node.hass=hass;node.preview=true;parent.append(node);window.demoCards.push(node);return node;}
+const overview=document.querySelector('#overview');
+card({type:'custom:echo-header-card',templates:{title:'Demo Room',greeting:'Good morning',time:'10:30 AM',date:'Monday, January 1'}},overview);
+card({type:'custom:echo-weather-card',entity:'weather.example',weather_images:true,templates:{label:'Outside'}},overview);
+const controls=document.querySelector('#controls');
+card({type:'custom:echo-toggle-card',entity:'switch.example_a',name:'Control A',icon:'mdi:ceiling-light-outline'},controls);
+card({type:'custom:echo-toggle-card',entity:'light.example_b',name:'Control B',icon:'mdi:led-strip-variant'},controls);
+card({type:'custom:echo-climate-card',entity:'climate.example',icon:'mdi:thermometer',templates:{title:'Climate',status:'Cool · 72°F',current_temperature:'72°F',target_temperature:'72°F',hint:''}},controls);
+const bottom=document.querySelector('#bottom');
+card({type:'custom:echo-media-card',entity:'media_player.example',name:'Music'},bottom);
+card({type:'custom:echo-container-card',title:'Security',icon:'mdi:shield-home-outline',columns:3,cards:[
+ ['lock.example_a','Entry A','mdi:lock-outline'],['lock.example_b','Entry B','mdi:lock-outline'],['cover.example','Cover','mdi:garage']
+].map(([entity,name,icon])=>({type:'custom:echo-entity-card',entity,name,icon,color:dark?'#9BD5B9':'#2D725C',background_color:dark?'#34463D':'#E2ECE3'}))},bottom);
+await Promise.all(window.demoCards.map(node=>node.ready));
+await Promise.all(window.demoCards.map(node=>node.templateReady));
+
+await document.fonts.ready;
+await document.querySelector('echo-weather-card').weatherPhoto.decode();
+await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+window.setDemoWeather=async(state,attributes={})=>{
+  hass.states['weather.example']={state,attributes:{...hass.states['weather.example']?.attributes,...attributes}};
+  for(const node of demoCards)node.hass={...hass};
+  for(const stream of weatherStreams)stream.callback({result:weatherText(stream.parameters)});
+  await document.querySelector('echo-weather-card').weatherPhoto.decode();
+};
+window.ready=true;
+</script>
+</html>

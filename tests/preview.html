@@ -24,6 +24,7 @@
   await import('../frontend/echo-cards.js');
   const {templateDefaults}=await import('../frontend/echo-card-editor.js');
   const {entityAppearanceDefaults}=await import('../frontend/echo-entity-templates.js');
+  const {weatherConditions}=await import('../frontend/echo-weather.js');
   const params = new URLSearchParams(location.search);
   const mode = params.get('mode') || 'legacy';
   const fixture = await fetch(mode === 'legacy' ? './dashboard-fixture.json' : `./${mode === 'comparison' ? 'reference' : mode}-fixture.json`).then(response => response.json());
@@ -74,10 +75,10 @@
     const now=new Date();
     if (kind==='header') return {time:now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}),date:now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}),greeting:now.getHours()<12?'Good morning':now.getHours()<17?'Good afternoon':'Good evening'}[slot];
     if (kind==='weather') return {
-      condition:state==='partlycloudy'?'Partly Cloudy':state.replace(/-/g,' ').replace(/\b\w/g,character=>character.toUpperCase()),
-      temperature:attributes.temperature==null?'--':Math.round(attributes.temperature)+(attributes.temperature_unit || unit),
-      humidity:attributes.humidity==null?'':`Humidity ${attributes.humidity}%`,
-      icon:({'clear-night':'mdi:weather-night',sunny:'mdi:weather-sunny',partlycloudy:'mdi:weather-partly-cloudy',cloudy:'mdi:weather-cloudy',rainy:'mdi:weather-rainy',pouring:'mdi:weather-pouring',snowy:'mdi:weather-snowy',lightning:'mdi:weather-lightning'})[state] || 'mdi:weather-partly-cloudy',
+      condition:weatherConditions[state]?.label || 'Unknown',
+      temperature:['unknown','unavailable'].includes(state)?'--'+(attributes.temperature_unit || unit):attributes.temperature==null?'--':Math.round(attributes.temperature)+(attributes.temperature_unit || unit),
+      humidity:state==='unknown'?'No data available':state==='unavailable'?'Weather service unavailable':attributes.humidity==null?'':`Humidity ${attributes.humidity}%`,
+      icon:weatherConditions[state]?.icon || 'mdi:help-circle-outline',
     }[slot];
     const target=attributes[config.temperature_target==='low'?'target_temp_low':config.temperature_target==='high'?'target_temp_high':'temperature'];
     return {

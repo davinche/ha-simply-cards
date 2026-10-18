@@ -10,51 +10,51 @@ Dashboard backgrounds are outside the cards. Remove a fixed view background such
 background: var(--primary-background-color)
 ```
 
-The palette retains warm header tones, blue weather tones and the existing state color meanings. Artwork, the artwork placeholder gradient, white artwork icons and white switch thumbs retain their original colors. The editor already uses Home Assistant CSS variables. This implementation follows HA mode while keeping the cards’ own visual identity; it does not inherit every arbitrary theme color.
+The palette uses porcelain and limestone surfaces, champagne and sage accents, and charcoal text. Cooling, heating and warning colors retain their distinct meanings. Real media artwork keeps its original colors; empty artwork uses a pastel gradient with a muted counterpart in dark mode. White artwork icons and switch thumbs remain white. The editor already uses Home Assistant CSS variables. This implementation follows HA mode while keeping the cards’ own visual identity; it does not inherit every arbitrary theme color.
 
-## Existing palette and dark equivalents
+## Compatibility token mapping
 
-| Existing light color | Dark equivalent |
-| --- | --- |
-| `#202732` | `#E7EDF5` |
-| `#202734` | `#E7EDF5` |
-| `#253041` | `#E7EDF5` |
-| `#263140` | `#E7EDF5` |
-| `#293646` | `#DCE5F0` |
-| `#818996` | `#ADB8C7` |
-| `#FFFFFF` | `#202731` |
-| `#FFF9EF` | `#302C28` |
-| `#18212E` | `#F0F3F7` |
-| `#24303E` | `#E7EDF5` |
-| `#8A929E` | `#ADB8C7` |
-| `#89919D` | `#ADB8C7` |
-| `#A0A6B0` | `#9EABBD` |
-| `#E9F2FE` | `#253C58` |
-| `#BCD1EB` | `#172A43` |
-| `#475A73` | `#BDCEE4` |
-| `#20334C` | `#E4EFFD` |
-| `#61748D` | `#A8BDD7` |
-| `#F3BD35` | `#FFD166` |
-| `#F2F4F7` | `#303B49` |
-| `#FAFBFD` | `#26313E` |
-| `#E6F0FF` | `#223D60` |
-| `#3478F6` | `#82B4FF` |
-| `#FDE9DF` | `#4B3027` |
-| `#EE773B` | `#FFAD80` |
-| `#E6F4EF` | `#203E35` |
-| `#FFF0CD` | `#44391F` |
-| `#F0F2F5` | `#303945` |
-| `#2A9477` | `#76D6B2` |
-| `#C68B14` | `#F4CC71` |
-| `#8B93A0` | `#B0BAC8` |
-| `#E5A51A` | `#D9AA43` |
-| `#D8DDE4` | `#4C596B` |
-| `#E4F5EC` | `#203D33` |
-| `#FDECE3` | `#493127` |
-| `#21926D` | `#79D7AE` |
-| `#C97445` | `#F5B18A` |
+Legacy names remain stable. See [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) for the current visual system.
 
-Shadow: `rgba(30,40,60,0.045)` → `rgba(0,0,0,0.24)`. The unchanged artwork gradient is `#b9b2e4`, `#edafbf`, `#f4c89a`; the switch thumb stays `white` and its shadow stays `#0002`.
+| Legacy token suffix | Light value | Dark value |
+| --- | --- | --- |
+| 202732 | #1D302E | #F3F1EC |
+| 202734 | #1D302E | #F3F1EC |
+| 253041 | #1D302E | #F3F1EC |
+| 263140 | #1D302E | #F3F1EC |
+| 293646 | #1D302E | #E9E2D7 |
+| 818996 | #7A807D | #B9B6AF |
+| ffffff | #FFFDF9 | #242625 |
+| fff9ef | #E9E2D7 | #383B33 |
+| 18212e | #1D302E | #F7F4ED |
+| 24303e | #1D302E | #F3F1EC |
+| 8a929e | #7A807D | #B9B6AF |
+| 89919d | #7A807D | #B9B6AF |
+| a0a6b0 | #72736C | #B9B6AF |
+| e9f2fe | #FFFDF9 | #343A33 |
+| bcd1eb | #E9E2D7 | #242625 |
+| 475a73 | #7A807D | #B9B6AF |
+| 20334c | #1D302E | #F3F1EC |
+| 61748d | #7A807D | #B9B6AF |
+| f3bd35 | #B29673 | #D5B78E |
+| f2f4f7 | #E9E2D7 | #444A41 |
+| fafbfd | #FFFDF9 | #282C29 |
+| e6f0ff | #E6F0FF | #223D60 |
+| 3478f6 | #3478F6 | #82B4FF |
+| fde9df | #FDE9DF | #4B3027 |
+| ee773b | #EE773B | #FFAD80 |
+| e6f4ef | #E2ECE3 | #34463D |
+| fff0cd | #EDE3D3 | #44391F |
+| f0f2f5 | #E9E2D7 | #444A41 |
+| 2a9477 | #2D725C | #9BD5B9 |
+| c68b14 | #9A794B | #D5B78E |
+| 8b93a0 | #72736C | #B9B6AF |
+| e5a51a | #B29673 | #C7A87C |
+| d8dde4 | #D6CEC2 | #555C51 |
+| e4f5ec | #E2ECE3 | #34463D |
+| fdece3 | #FDECE3 | #493127 |
+| 21926d | #2D725C | #9BD5B9 |
+| c97445 | #C97445 | #F5B18A |
 
 ## Verification and preview
 

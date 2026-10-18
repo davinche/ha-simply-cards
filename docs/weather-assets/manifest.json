@@ -1,0 +1,138 @@
+{
+  "clear-night": {
+    "file": "images/clear-night.webp",
+    "mdi_icon": "mdi:weather-night",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "cloudy": {
+    "file": "images/cloudy.webp",
+    "mdi_icon": "mdi:weather-cloudy",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "fog": {
+    "file": "images/fog.webp",
+    "mdi_icon": "mdi:weather-fog",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "hail": {
+    "file": "images/hail.webp",
+    "mdi_icon": "mdi:weather-hail",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "lightning": {
+    "file": "images/lightning.webp",
+    "mdi_icon": "mdi:weather-lightning",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "lightning-rainy": {
+    "file": "images/lightning-rainy.webp",
+    "mdi_icon": "mdi:weather-lightning-rainy",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "partlycloudy": {
+    "file": "images/partlycloudy.webp",
+    "mdi_icon": "mdi:weather-partly-cloudy",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "pouring": {
+    "file": "images/pouring.webp",
+    "mdi_icon": "mdi:weather-pouring",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "rainy": {
+    "file": "images/rainy.webp",
+    "mdi_icon": "mdi:weather-rainy",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "snowy": {
+    "file": "images/snowy.webp",
+    "mdi_icon": "mdi:weather-snowy",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "snowy-rainy": {
+    "file": "images/snowy-rainy.webp",
+    "mdi_icon": "mdi:weather-snowy-rainy",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "sunny": {
+    "file": "images/sunny.webp",
+    "mdi_icon": "mdi:weather-sunny",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "windy": {
+    "file": "images/windy.webp",
+    "mdi_icon": "mdi:weather-windy",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "windy-variant": {
+    "file": "images/windy-variant.webp",
+    "mdi_icon": "mdi:weather-windy-variant",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "exceptional": {
+    "file": "images/exceptional.webp",
+    "mdi_icon": "mdi:alert-outline",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "unknown": {
+    "file": "images/unknown.webp",
+    "mdi_icon": "mdi:help-circle-outline",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "unavailable": {
+    "file": "images/unavailable.webp",
+    "mdi_icon": "mdi:cloud-off-outline",
+    "size": {
+      "width": 1920,
+      "height": 1080
+    }
+  }
+}

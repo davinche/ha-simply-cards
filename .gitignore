@@ -9,3 +9,14 @@ Thumbs.db
 .env
 .env.*
 *.local.*
+# Local deployment reviews are not public component documentation or fixtures.
+docs/GUEST-BEDROOM-LAYOUT.md
+docs/DESIGN-AUDIT-KITCHEN.md
+docs/KITCHEN-DESIGN-PROPOSAL.md
+tests/kitchen-preview.html
+tests/kitchen-design.cjs
+tests/kitchen-refresh-preview.js
+tests/assets/kitchen-interior.webp
+tests/assets/relax.webp
+tests/assets/entertain.webp
+tests/assets/night.webp

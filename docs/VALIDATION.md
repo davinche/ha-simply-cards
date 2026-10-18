@@ -1,8 +1,16 @@
 # Current validation
 
-Validated on October 17, 2026 against base revision
-`2f543123752a474f364eb0308de45bb0592bf9cb` plus the uncommitted audit fixes.
-This is a local working-tree validation, not validation of a published release.
+Locally validated on October 18, 2026 for `v0.1.1-beta.6`. The release tag
+identifies the source revision once published. Local checks do not replace
+live Home Assistant/Echo validation.
+
+Beta.6 adds shared production design styles, exact bundled Inter/Cormorant faces,
+Image Button actions/editor, opt-in horizontal Entity layout, 17 embedded weather
+backgrounds with theme-aware text, and centered media icons. Public design
+fixtures use fictional labels and synthetic entity IDs. Private deployment
+reviews and screenshot-specific notes are excluded from version control.
+Privacy checks run in both CI and the release workflow, alongside source/bundle
+browser suites. Physical-device verification remains a separate live check.
 
 - Source browser suite: 29 groups pass using local Chrome and Playwright.
 - Release build and metadata checks pass. The bundle has no external imports.
@@ -12,6 +20,9 @@ This is a local working-tree validation, not validation of a published release.
   complete action-form saves, inherited/explicit icon actions, independent
   power switches, picture preservation, preview protection, shared request
   guards, accessibility and compact media fallback.
+- Beta.2 adds independent Entity icon-background colors and a blank default
+  thermostat hint. Both have regression coverage, including custom hints and
+  restoring state-based background colors.
 - Fixtures use synthetic entity/user IDs. Browser screenshots and test results
   are generated under `tests/` and ignored by Git.
 
@@ -33,8 +44,8 @@ Before promoting a release, verify the following on Home Assistant:
 5. Verify HACS installation/resource reload and both GitHub workflow runs.
 
 No live Home Assistant, real devices, HACS install, or remote GitHub workflow
-was exercised during local validation. No commit, push, tag or release was
-performed as part of the audit fixes.
+was exercised during local validation. Publishing is handled separately by
+the tagged GitHub release workflow.
 
 ## Historical preparation limits
 

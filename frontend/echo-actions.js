@@ -3,7 +3,9 @@ export const actionNames = ['none', 'more-info', 'toggle', 'perform-action', 'na
 export const usable = entity => entity && !['unknown', 'unavailable'].includes(entity.state);
 const emit = (node, name, detail) => node.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
 export const actionFor = (card, key) => card.config[key] ?? card.gestureDefaults?.[key] ?? { action: 'none' };
-const controlsEntity = action => ['toggle', 'perform-action', 'call-service', 'cycle-hvac-mode'].includes(action.action);
+// Image navigation can call explicit service targets without a stateful entity (e.g. scenes).
+const controlsEntity = (action, card) => ['toggle', 'cycle-hvac-mode'].includes(action.action)
+  || (['perform-action', 'call-service'].includes(action.action) && card.kind !== 'image-button');
 
 // The element owns events; the caller supplies its action policy and keeps cleanup.
 export function bindGestures(element, { configured, run }) {
@@ -56,7 +58,7 @@ export function cancelCardGestures(card) { for (const cleanup of card.cleanups |
 
 export function syncActionAccessibility(card, element, prefix = '') {
   const actions = gestures.map(gesture => actionFor(card, `${prefix}${gesture}_action`)).filter(action => action.action !== 'none');
-  const disabled = !!card.preview || !!card.pending || !actions.length || actions.every(action => controlsEntity(action) && !usable(card.hass?.states[card.config.entity]));
+  const disabled = !!card.preview || !!card.pending || !actions.length || actions.every(action => controlsEntity(action, card) && !usable(card.hass?.states[card.config.entity]));
   element.setAttribute('aria-disabled', String(disabled));
   element.setAttribute('aria-busy', String(!!card.pending));
   if (actionFor(card, `${prefix}tap_action`).action === 'toggle') element.setAttribute('aria-pressed', String(card.hass?.states[card.config.entity]?.state === 'on'));
@@ -67,7 +69,7 @@ export async function runCardAction(card, key) {
   const action = actionFor(card, key);
   if (card.preview || action.action === 'none' || card.pending) return;
   const entity = card.hass?.states[card.config.entity];
-  if (controlsEntity(action) && (!card.hass || !usable(entity))) return;
+  if (controlsEntity(action, card) && (!card.hass || !usable(entity))) return;
   const exempt = action.confirmation?.exemptions?.some(item => item.user === card.hass?.user?.id);
   if (action.confirmation && !exempt && !window.confirm(action.confirmation.text || 'Run this action?')) return;
   const owner = card.actionOwner || card;

@@ -1,3 +1,5 @@
+import { weatherConditions } from './echo-weather.js';
+
 const domains = {
   weather: ['weather'], toggle: ['light', 'switch', 'input_boolean', 'fan'], climate: ['climate'],
   media: ['media_player'], fan: ['fan'], security: ['lock', 'cover'],
@@ -23,10 +25,10 @@ export function templateDefaults(kind) {
   };
   if (kind === 'weather') return {
     label: 'Outside',
-    condition: "{{ 'Partly Cloudy' if states(entity) == 'partlycloudy' else states(entity) | replace('-', ' ') | title }}",
-    temperature: "{% set value = state_attr(entity, 'temperature') %}{{ (value | round(0) | int | string) ~ (state_attr(entity, 'temperature_unit') or temperature_unit) if value is number else '--' }}",
-    humidity: "{% set value = state_attr(entity, 'humidity') %}{{ 'Humidity ' ~ value ~ '%' if value is not none else '' }}",
-    icon: "{{ {'clear-night': 'mdi:weather-night', 'sunny': 'mdi:weather-sunny', 'partlycloudy': 'mdi:weather-partly-cloudy', 'cloudy': 'mdi:weather-cloudy', 'rainy': 'mdi:weather-rainy', 'pouring': 'mdi:weather-pouring', 'snowy': 'mdi:weather-snowy', 'lightning': 'mdi:weather-lightning'}.get(states(entity), 'mdi:weather-partly-cloudy') }}",
+    condition: `{{ ${JSON.stringify(Object.fromEntries(Object.entries(weatherConditions).map(([state, condition]) => [state, condition.label])))}.get(states(entity), 'Unknown') }}`,
+    temperature: "{% set value = state_attr(entity, 'temperature') %}{% set unit = state_attr(entity, 'temperature_unit') or temperature_unit %}{{ '--' ~ unit if states(entity) in ['unknown', 'unavailable'] else (value | round(0) | int | string) ~ unit if value is number else '--' }}",
+    humidity: "{% if states(entity) == 'unknown' %}No data available{% elif states(entity) == 'unavailable' %}Weather service unavailable{% else %}{% set value = state_attr(entity, 'humidity') %}{{ 'Humidity ' ~ value ~ '%' if value is not none else '' }}{% endif %}",
+    icon: `{{ ${JSON.stringify(Object.fromEntries(Object.entries(weatherConditions).map(([state, condition]) => [state, condition.icon])))}.get(states(entity), 'mdi:help-circle-outline') }}`,
   };
   if (kind === 'climate') return {
     title: "{{ state_attr(entity, 'friendly_name') or entity }}",
@@ -42,6 +44,8 @@ export function normalizeTextConfig(kind, config, previous) {
   if (!textFields[kind]) return { ...config };
   const defaults = templateDefaults(kind);
   const templates = { ...defaults, ...config.templates };
+  // Upgrade only exact shipped defaults; preserve user-written template sources.
+  if (kind === 'weather') for (const [key, source] of Object.entries(legacyWeatherDefaults)) if (templates[key] === source) templates[key] = defaults[key];
   const titleSlot = kind === 'weather' ? 'label' : 'title';
   if (!Object.prototype.hasOwnProperty.call(config.templates || {}, titleSlot)) {
     const oldTitle = config.name ?? (kind === 'header' ? config.room : undefined);
@@ -56,6 +60,13 @@ export function normalizeTextConfig(kind, config, previous) {
   if (kind === 'header') delete result.room;
   return result;
 }
+
+const legacyWeatherDefaults = {
+  condition: "{{ 'Partly Cloudy' if states(entity) == 'partlycloudy' else states(entity) | replace('-', ' ') | title }}",
+  temperature: "{% set value = state_attr(entity, 'temperature') %}{{ (value | round(0) | int | string) ~ (state_attr(entity, 'temperature_unit') or temperature_unit) if value is number else '--' }}",
+  humidity: "{% set value = state_attr(entity, 'humidity') %}{{ 'Humidity ' ~ value ~ '%' if value is not none else '' }}",
+  icon: "{{ {'clear-night': 'mdi:weather-night', 'sunny': 'mdi:weather-sunny', 'partlycloudy': 'mdi:weather-partly-cloudy', 'cloudy': 'mdi:weather-cloudy', 'rainy': 'mdi:weather-rainy', 'pouring': 'mdi:weather-pouring', 'snowy': 'mdi:weather-snowy', 'lightning': 'mdi:weather-lightning'}.get(states(entity), 'mdi:weather-partly-cloudy') }}",
+};
 
 export function sliderCapability(entity) {
   const attributes = entity?.attributes || {};
@@ -138,6 +149,7 @@ class EchoCardEditor extends HTMLElement {
     }
     if (this.kind === 'header') this.control(this.form, 'Header arrangement', 'header_layout', { defaultValue: 'auto', options: [{ value: 'auto', label: 'Automatic (default)' }, { value: 'stacked', label: 'Greeting above title' }, { value: 'compact', label: 'Compact: greeting below clock' }] });
     if (this.kind === 'weather') this.control(this.form, 'Weather arrangement', 'weather_layout', { defaultValue: 'stacked', options: [{ value: 'stacked', label: 'Temperature below condition (default)' }, { value: 'inline', label: 'Temperature beside condition' }] });
+    if (this.kind === 'weather') this.control(this.form, 'Condition background images (ATELIER)', 'weather_images', { checkbox: true });
     if (textFields[this.kind]) {
       const fields = textFields[this.kind];
       const group = document.createElement('div');

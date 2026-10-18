@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Simply Cards · Component showcase</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#232923;color:#f1ede5;font-family:Inter,"Segoe UI",sans-serif}
+main{width:960px;height:480px;padding:20px 24px;display:grid;grid-template-rows:68px 24px 120px 24px 152px;gap:8px}
+header{display:flex;justify-content:space-between;align-items:center}h1{font:400 36px 'Cormorant Garamond',Georgia,serif;margin:0}p{font-size:12px;color:#bdbaaf;margin:4px 0}h2{font-size:15px;font-weight:500;margin:0;align-self:end}.row{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(0,1fr))}.bottom{display:grid;gap:12px;grid-template-columns:1fr 1fr 1.2fr}.status{display:grid;gap:8px;grid-template-rows:1fr 1fr}small{letter-spacing:2px;font-size:11px;color:#bdbaaf}
+body.light{background:#e9e2d7;color:#2f3530}body.light p,body.light small{color:#696a63}
+.status{min-height:0;grid-template-rows:repeat(2,minmax(0,1fr))}
+</style>
+<main>
+<header><div><small>DEMO DASHBOARD</small><h1>Good Evening</h1><p>Everything looks good at home.</p></div><div style="text-align:right"><span>7:28 PM · 72°</span><p>Clear skies · Tuesday, April 22</p></div></header>
+<h2>Quick Scenes</h2><div class="row" id="scenes"></div>
+<h2>Demo Room <span style="float:right">Home Status</span></h2><div class="bottom" id="controls"></div>
+</main>
+<script type="module">
+// Same lightweight Home Assistant stand-ins as the existing preview harness.
+import './native-mocks.js';
+await import('./preview-icons.js');
+await import('../frontend/echo-cards.js');
+const dark=new URLSearchParams(location.search).get('theme')!=='light';
+document.body.classList.toggle('light',!dark);
+const hass={themes:{darkMode:dark},states:{
+ 'light.living':{state:'on',attributes:{friendly_name:'Lighting',brightness:178,supported_color_modes:['brightness']}},
+ 'climate.living':{state:'cool',attributes:{friendly_name:'Climate',temperature:72,current_temperature:74,min_temp:60,max_temp:85,hvac_modes:['off','cool','heat']}},
+ 'lock.front':{state:'locked',attributes:{friendly_name:'All doors locked'}},
+ 'sensor.air':{state:'Good · 72° · 45%',attributes:{friendly_name:'Indoor air'}}
+},config:{unit_system:{temperature:'°F'}},callService:async()=>{}};
+function card(config,parent){const node=document.createElement(config.type.slice(7));node.setConfig(config);node.hass=hass;node.preview=true;parent.append(node);return node;}
+const scenes=document.querySelector('#scenes');
+for(const [heading,subheading,icon] of [['Good Morning','Open shades, warm lights','mdi:weather-sunny'],['Relax','Dim lights, cozy mood','mdi:sofa-outline'],['Entertain','Brighten, music on','mdi:sofa-outline'],['Good Night','Lock up, turn off','mdi:weather-night']])card({type:'custom:echo-image-button-card',heading,subheading,icon,image:'./room-illustration.svg',selected:heading==='Relax'},scenes);
+const controls=document.querySelector('#controls');
+card({type:'custom:echo-toggle-card',entity:'light.living',name:'Lighting',show_brightness:true},controls);
+card({type:'custom:echo-climate-card',entity:'climate.living',icon:'mdi:thermometer',templates:{title:'Climate',status:'Cooling to',target_temperature:'72°',current_temperature:'74°'}},controls);
+const status=document.createElement('div');status.className='status';controls.append(status);
+card({type:'custom:echo-entity-card',entity:'lock.front',layout:'horizontal',icon:'mdi:lock-outline',color:dark?'#B2C3AE':'#657467',background_color:dark?'#444A41':'#E2E7DF'},status);
+card({type:'custom:echo-entity-card',entity:'sensor.air',layout:'horizontal',icon:'mdi:leaf',color:dark?'#B2C3AE':'#657467',background_color:dark?'#444A41':'#E2E7DF'},status);
+await document.fonts.ready;
+window.ready=true;
+</script>
+</html>

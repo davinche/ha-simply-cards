@@ -5,7 +5,7 @@ ha-card {
   min-height:0;
   min-width:0;
   box-sizing:border-box;
-  border-radius:24px;
+  border-radius:18px;
   border:0;
   background:linear-gradient(135deg,var(--echo-color-ffffff,#FFFFFF),var(--echo-color-fff9ef,#FFF9EF));
   box-shadow:0 3px 15px var(--echo-shadow,rgba(30,40,60,0.045));
@@ -29,14 +29,14 @@ ha-card {
   justify-self:start;
   align-self:center;
   font-size:43px;
-  font-weight:750;
+  font-weight:500;
   color:var(--echo-color-18212e,#18212E)
 }
 [data-field="clock"] {
   justify-self:end;
   align-self:center;
   font-size:31px;
-  font-weight:700;
+  font-weight:500;
   color:var(--echo-color-18212e,#18212E)
 }
 [data-field="date"] {
@@ -51,7 +51,7 @@ ha-card {
   min-height:0;
   min-width:0;
   box-sizing:border-box;
-  border-radius:24px;
+  border-radius:18px;
   border:0;
   background:linear-gradient(125deg,var(--echo-color-e9f2fe,#E9F2FE),var(--echo-color-bcd1eb,#BCD1EB));
   box-shadow:0 3px 15px var(--echo-shadow,rgba(30,40,60,0.045));
@@ -85,13 +85,13 @@ ha-icon {
   justify-self:start;
   align-self:end;
   font-size:23px;
-  font-weight:700;
+  font-weight:500;
   color:var(--echo-color-20334c,#20334C)
 }
 [data-field="temperature"] {
   justify-self:start;
   font-size:25px;
-  font-weight:650;
+  font-weight:500;
   color:var(--echo-color-20334c,#20334C)
 }
 [data-field="humidity"] {
@@ -106,7 +106,7 @@ ha-card {
   min-height:0;
   min-width:0;
   box-sizing:border-box;
-  border-radius:24px;
+  border-radius:18px;
   border:0;
   background:var(--echo-color-ffffff,#FFFFFF);
   box-shadow:0 3px 15px var(--echo-shadow,rgba(30,40,60,0.045));
@@ -134,7 +134,7 @@ ha-icon {
 }
 .name {
   font-size:17px;
-  font-weight:650;
+  font-weight:500;
   color:var(--echo-color-202732,#202732);
   justify-self:start;
   align-self:end;
@@ -157,7 +157,7 @@ ha-card {
   min-height:0;
   min-width:0;
   box-sizing:border-box;
-  border-radius:calc(24 * var(--echo-unit, 1px));
+  border-radius:calc(18 * var(--echo-unit, 1px));
   border:0;
   background:var(--echo-color-ffffff,#FFFFFF);
   box-shadow:0 calc(3 * var(--echo-unit, 1px)) calc(15 * var(--echo-unit, 1px)) var(--echo-shadow,rgba(30,40,60,0.045));
@@ -181,7 +181,7 @@ ha-card {
   align-self:end;
   font-size:calc(19 * var(--echo-unit, 1px));
   line-height:calc(23 * var(--echo-unit, 1px));
-  font-weight:650;
+  font-weight:500;
   color:var(--echo-color-202732,#202732)
 }
 [data-field="status"] {
@@ -233,7 +233,7 @@ ha-card {
   min-height:0;
   min-width:0;
   box-sizing:border-box;
-  border-radius:24px;
+  border-radius:18px;
   border:0;
   background:var(--echo-color-ffffff,#FFFFFF);
   box-shadow:0 3px 15px var(--echo-shadow,rgba(30,40,60,0.045));
@@ -286,7 +286,7 @@ ha-card {
   overflow:hidden;
   box-sizing:border-box;
   box-shadow:none;
-  background:linear-gradient(160deg,#b9b2e4,#edafbf 60%,#f4c89a)
+  background:linear-gradient(145deg,var(--echo-artwork-start,#657467),var(--echo-artwork-end,#2F3530))
 }
 .grid {
   grid-template-areas:"i";
@@ -308,6 +308,8 @@ img {
 }
 `,
   "media-action": `
+.grid{grid-template-areas:"i";grid-template-columns:1fr;grid-template-rows:1fr;place-items:center}
+.img-cell{width:100%;height:100%}
 ha-card {
   height:48px;
   width:48px;
@@ -329,7 +331,7 @@ ha-card {
   min-height:0;
   min-width:0;
   box-sizing:border-box;
-  border-radius:24px;
+  border-radius:18px;
   border:0;
   background:var(--echo-color-ffffff,#FFFFFF);
   box-shadow:0 3px 15px var(--echo-shadow,rgba(30,40,60,0.045));
@@ -357,7 +359,7 @@ ha-icon {
 }
 .name {
   font-size:16px;
-  font-weight:650;
+  font-weight:500;
   color:var(--echo-color-253041,#253041);
   justify-self:start;
   align-self:end
@@ -370,7 +372,7 @@ ha-icon {
 }
 [data-field="current"] {
   font-size:31px;
-  font-weight:700;
+  font-weight:500;
   color:var(--echo-color-18212e,#18212E)
 }
 [data-field="hint"] {
@@ -386,7 +388,7 @@ ha-card {
   min-height:0;
   min-width:0;
   box-sizing:border-box;
-  border-radius:24px;
+  border-radius:18px;
   border:0;
   background:var(--echo-color-ffffff,#FFFFFF);
   box-shadow:0 3px 15px var(--echo-shadow,rgba(30,40,60,0.045));
@@ -426,7 +428,7 @@ ha-card {
   background:var(--echo-color-fafbfd,#FAFBFD);
   border:0;
   --ha-card-border-width:0px;
-  border-radius:19px;
+  border-radius:12px;
   padding:12px 5px;
   box-shadow:none
 }
@@ -449,7 +451,7 @@ ha-icon {
 }
 .name {
   font-size:13px;
-  font-weight:650;
+  font-weight:500;
   color:var(--echo-color-263140,#263140);
   justify-self:center;
   margin-top:6px
