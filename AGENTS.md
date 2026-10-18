@@ -11,6 +11,12 @@ Do not add scenes or enable alternate layouts merely to showcase them.
 Typography: reserve Cormorant Garamond for the room title and
 weather condition. All other text uses Inter, including greetings and Music.
 
+Verification is required for every change. For visual changes, render previews
+from the actual implementation, inspect them, and show them to the user before
+considering the work complete. Cover affected states and both themes where
+applicable; passing code assertions alone is not visual verification. State
+which checks ran and any remaining device-specific verification.
+
 Public distribution: never commit private dashboard configurations, deployment
 notes, personal names/addresses, actual entity/user/device IDs, credentials,
 internal service URLs, browser profiles, or machine-specific filesystem paths.

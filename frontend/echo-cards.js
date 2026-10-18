@@ -59,6 +59,12 @@ ha-icon{display:block;height:auto;aspect-ratio:1;--mdc-icon-size:100%}
 .fan-speed>span{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--echo-color-818996,#818996)}
 .fan-speed output{font-size:13px;font-weight:500;color:var(--echo-color-2a9477,#2A9477)}
 .fan-speed input{margin:0;width:100%;height:44px;accent-color:var(--echo-color-2a9477,#2A9477)}
+.fan-speed input{appearance:none;background:transparent}
+.fan-speed input::-webkit-slider-runnable-track{height:6px;border-radius:6px;background:linear-gradient(to right,currentColor var(--echo-slider-progress,0%),var(--echo-color-d8dde4) 0)}
+.fan-speed input::-webkit-slider-thumb{appearance:none;width:16px;height:16px;margin-top:-5px;border-radius:50%;background:currentColor}
+.fan-speed input::-moz-range-track{height:6px;border-radius:6px;background:var(--echo-color-d8dde4)}
+.fan-speed input::-moz-range-progress{height:6px;border-radius:6px;background:currentColor}
+.fan-speed input::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:currentColor}
 img{display:block}
 `;
 
@@ -538,6 +544,7 @@ class EchoCard extends HTMLElement {
       this.range.addEventListener('input', () => {
         this.editing = true;
         this.output.textContent = fanPercentage(this.range.value, Number(this.range.max)) + '%';
+        this.range.style.setProperty('--echo-slider-progress', `${fanPercentage(this.range.value, Number(this.range.max))}%`);
       });
       this.range.addEventListener('change', event => {
         event.stopPropagation();
@@ -580,11 +587,11 @@ class EchoCard extends HTMLElement {
       if (this.weatherSeparator) this.weatherSeparator.hidden = !this.fields.condition.textContent || !this.fields.temperature.textContent;
     } else if (['toggle', 'fan-power'].includes(this.kind)) {
       const fan = this.config.entity.startsWith('fan.');
-      this.stateColors(on ? (fan ? 'var(--echo-color-e6f4ef,#E6F4EF)' : 'var(--echo-color-fff0cd,#FFF0CD)') : 'var(--echo-color-f0f2f5,#F0F2F5)', on ? (fan ? 'var(--echo-color-2a9477,#2A9477)' : 'var(--echo-color-c68b14,#C68B14)') : 'var(--echo-color-8b93a0,#8B93A0)');
+      this.stateColors(on ? (fan ? 'var(--echo-color-e6f4ef,#E6F4EF)' : 'var(--echo-control-light-bg)') : 'var(--echo-color-f0f2f5,#F0F2F5)', on ? (fan ? 'var(--echo-color-2a9477,#2A9477)' : 'var(--echo-control-light-icon)') : 'var(--echo-color-8b93a0,#8B93A0)');
       this.setIcon(this.config.icon || (fan ? 'mdi:fan' : 'mdi:lightbulb'));
       this.text('l', status);
       this.fields.toggle.classList.toggle('on', on);
-      this.style.setProperty('--toggle-background', on ? (fan ? 'var(--echo-color-2a9477,#2A9477)' : 'var(--echo-color-e5a51a,#E5A51A)') : 'var(--echo-color-d8dde4,#D8DDE4)');
+      this.style.setProperty('--toggle-background', on ? (fan ? 'var(--echo-color-2a9477,#2A9477)' : 'var(--echo-control-light-active)') : 'var(--echo-color-d8dde4,#D8DDE4)');
       syncActionAccessibility(this, this.shell);
       if (this.iconCell.hasAttribute('role')) syncActionAccessibility(this, this.iconCell, 'icon_');
     } else if (this.kind === 'climate') {
@@ -649,13 +656,15 @@ class EchoCard extends HTMLElement {
       this.fields.speed.hidden = !capable && available(entity);
       this.range.disabled = this.preview || this.pending || !available(entity) || !capable;
       syncActionAccessibility(this, this.shell);
-      this.range.style.accentColor = light ? 'var(--echo-color-e5a51a,#E5A51A)' : 'var(--echo-color-2a9477,#2A9477)';
-      this.output.style.color = light ? 'var(--echo-color-c68b14,#C68B14)' : 'var(--echo-color-2a9477,#2A9477)';
+      this.range.style.accentColor = light ? 'var(--echo-control-light-active)' : 'var(--echo-color-2a9477,#2A9477)';
+      this.range.style.color = this.range.style.accentColor;
+      this.output.style.color = light ? 'var(--echo-control-light-icon)' : 'var(--echo-color-2a9477,#2A9477)';
       if (!this.editing || !available(entity)) {
         const brightness = state === 'off' ? 0 : Math.max(0, Math.min(100, Math.round((Number(attributes.brightness) || 0) * 100 / 255)));
         const values = light ? { steps: 100, percentage: brightness, position: brightness } : fanValues(entity);
         this.range.max = String(values.steps);
         this.range.value = String(values.position);
+        this.range.style.setProperty('--echo-slider-progress', `${values.percentage}%`);
         this.output.textContent = available(entity) ? Math.round(values.percentage) + '%' : '--';
       }
     }

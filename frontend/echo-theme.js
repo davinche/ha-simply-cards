@@ -33,6 +33,9 @@ export const themeStyle = `
   --echo-color-ee773b:#EE773B;
   --echo-color-e6f4ef:#E2ECE3;
   --echo-color-fff0cd:#EDE3D3;
+  --echo-control-light-bg:#FFF0CE;
+  --echo-control-light-icon:#B5811F;
+  --echo-control-light-active:#D3A039;
   --echo-color-f0f2f5:#E9E2D7;
   --echo-color-2a9477:#2D725C;
   --echo-color-c68b14:#9A794B;
@@ -46,6 +49,9 @@ export const themeStyle = `
   --echo-shadow:rgba(30,40,60,0.045);
 }
 :host([echo-dark]){
+  --echo-control-light-bg:#44391F;
+  --echo-control-light-icon:#D5B78E;
+  --echo-control-light-active:#E5BA78;
   color-scheme:dark;
   --echo-artwork-start:#465144;
   --echo-artwork-end:#252D26;
@@ -80,7 +86,7 @@ export const themeStyle = `
   --echo-color-2a9477:#9BD5B9;
   --echo-color-c68b14:#D5B78E;
   --echo-color-8b93a0:#B9B6AF;
-  --echo-color-e5a51a:#C7A87C;
+  --echo-color-e5a51a:#E5BA78;
   --echo-color-d8dde4:#555C51;
   --echo-color-e4f5ec:#34463D;
   --echo-color-fdece3:#493127;

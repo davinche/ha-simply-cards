@@ -28,6 +28,10 @@ text, and lighter accents rather than simply inverting the light theme.
 Keep cooling blue, heating orange, and warning amber distinct for familiar Home
 Assistant semantics. Positive entity states use sage, lights use warm champagne
 tones, and inactive states use limestone. Explicit user colors remain literal.
+Lighting Control cards use a warmer active gold in light mode: icon #B5811F,
+badge #FFF0CE, and switch/slider #D3A039. Dark-mode Control colors are #D5B78E,
+#44391F, and #E5BA78 respectively. These semantic Control colors do not alter
+Entity-card appearance defaults.
 Built-in legacy `--echo-color-*` names remain stable; their values are mapped in
 `frontend/echo-theme.js`. Read those names as compatibility identifiers.
 

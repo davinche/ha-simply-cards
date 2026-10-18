@@ -126,6 +126,30 @@ const refresh=true;
       const {fonts}=await cdp.send('CSS.getPlatformFontsForNode',{nodeId:node.nodeId});
       assert.ok(fonts.some(font=>font.isCustomFont && font.postScriptName===face),`Actual ${value}: expected ${face}, got ${JSON.stringify(fonts)}`);
     }
+    await page.setViewportSize({width:960,height:600});
+    await page.evaluate(async(slider)=>{
+      const hass=demoCards[0].hass;
+      const main=document.querySelector('main');
+      main.replaceChildren();main.style.cssText='padding:24px;display:grid;grid-template-rows:1fr 1fr;gap:20px;background:#F5F3EE';
+      for(const darkMode of [false,true]){
+        const section=document.createElement('section');
+        section.style.cssText=`display:grid;grid-template-columns:1fr 1fr;grid-template-rows:24px 192px;gap:12px;padding:16px;border-radius:24px;background:${darkMode?'#171A19':'#F5F3EE'};color:${darkMode?'#F3F1EC':'#1D302E'};font:500 16px Inter`;
+        const heading=document.createElement('div');heading.textContent=darkMode?'Dark theme':'Light theme';heading.style.gridColumn='1 / -1';section.append(heading);
+        for(const state of ['off','on']){
+          const card=document.createElement('echo-toggle-card');
+          card.setConfig({entity:'light.example',name:`Lighting · ${state}`,icon:'mdi:ceiling-light-outline',slider});
+          card.hass={...hass,themes:{darkMode},states:{'light.example':{entity_id:'light.example',state,attributes:{supported_color_modes:['brightness'],brightness:state==='on'?179:0}}}};
+          card.preview=!slider;section.append(card);
+        }
+        main.append(section);
+      }
+      await document.fonts.ready;
+    },process.argv.includes('--slider-preview'));
+    await page.waitForTimeout(100);
+    if(process.argv.includes('--slider-preview')){
+      assert.equal(await page.locator('echo-toggle-card input[type="range"]:visible').count(),4,'All slider previews must show their brightness control');
+    }
+    await page.screenshot({path:path.join(root,process.argv.includes('--slider-preview')?'tests/toggle-slider-comparison.png':'tests/toggle-state-comparison.png')});
     assert.deepEqual(errors,[]);
     console.log('Demo design: original three-row layout, no scenes, default header, three vertical Security tiles; 1280×800 light/dark captures without clipping; exact rendered font faces.');
   } finally{await browser.close();}

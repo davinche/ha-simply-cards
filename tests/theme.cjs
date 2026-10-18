@@ -24,6 +24,18 @@ const root = path.resolve(__dirname, '..');
     assert.deepEqual(errors, []);
     await page.screenshot({path:path.join(root,'tests/theme-comparison.png'),fullPage:true});
     const result = await page.evaluate(async () => {
+      const control=document.querySelector('echo-toggle-card');
+      for(const darkMode of [false,true])for(const domain of ['switch','fan']){
+        const id=`${domain}.example`;
+        control.setConfig({entity:id});
+        const appearances=[];
+        for(const state of ['off','on','off']){
+          control.hass={...mockHass,themes:{darkMode},states:{...mockHass.states,[id]:{state,attributes:{}}}};
+          appearances.push([getComputedStyle(control.iconElement).color,getComputedStyle(control.iconCell).backgroundColor,getComputedStyle(control.fields.toggle).backgroundColor]);
+        }
+        if(appearances[0].some((value,index)=>value===appearances[1][index]))throw new Error('Toggle on/off icon, badge, or track did not change');
+        if(JSON.stringify(appearances[0])!==JSON.stringify(appearances[2]))throw new Error('Toggle off colors failed to restore');
+      }
       const cards = [...document.querySelectorAll('section[data-dark="true"] echo-header-card, section[data-dark="true"] echo-toggle-card, section[data-dark="true"] echo-entity-card, section[data-dark="true"] echo-container-card')];
       for (const card of cards) {
         const shell = card.shadowRoot.querySelector('ha-card');

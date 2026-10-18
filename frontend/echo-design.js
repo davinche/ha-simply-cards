@@ -32,8 +32,8 @@ export const designStyle = `
 :host([kind="weather"][roomy][weather-layout="stacked"]) [data-field="humidity"]{font-size:16px;line-height:24px;color:var(--echo-weather-secondary,var(--echo-design-secondary))}
 :host([kind="weather"][roomy][weather-fallback]) .grid{grid-template-areas:"i eyebrow" "i condition" "i temperature" "i humidity";grid-template-columns:64px minmax(0,1fr)}
 :host([kind="weather"][roomy][weather-fallback]) .img-cell{width:64px;height:64px}
-:host([kind="toggle"]) .img-cell{background:var(--echo-design-icon-bg)}
-:host([kind="toggle"]) ha-icon{color:var(--echo-design-icon)}
+:host([kind="toggle"]) .img-cell{background:var(--state-background)}
+:host([kind="toggle"]) ha-icon{color:var(--state-color)}
 :host([kind="toggle"][roomy]) ha-card{padding:20px 22px}
 :host([kind="toggle"][roomy]) .grid{grid-template-rows:76px minmax(0,1fr) 24px}
 :host([kind="toggle"][roomy]) .img-cell{width:76px;height:76px;border-radius:50%}
